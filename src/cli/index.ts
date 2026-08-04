@@ -610,7 +610,7 @@ program
         const size = await ensureChangeSize(projectRoot, changeName);
         if (size === 'large') {
           console.log(
-            '规模判定：大型需求。将拆分子能力目录 c1/、c2/…（各含 proposal/spec/design/tasks），根目录仅保留主 proposal 与 refine.md。'
+            '规模判定：大型需求。将拆分子能力目录 c1-<描述>/、c2-<描述>/…（各含 proposal/spec/design/tasks），根目录仅保留主 proposal 与 refine.md。'
           );
         } else if (size === 'small') {
           console.log('规模判定：简单需求。四件套（proposal/spec/design/tasks）将直接放在变更根目录。');

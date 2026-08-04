@@ -210,7 +210,7 @@ export async function ensureChangeSize(
 
   const { select, confirm } = await import('@inquirer/prompts');
   const confirmed = await confirm({
-    message: '根据完善信息，此变更规模如何？(large 将拆分子能力 c1/c2…)',
+    message: '根据完善信息，此变更规模如何？(large 将拆分子能力 c1-<描述>/c2-<描述>…)',
     default: false,
   });
   const size: 'large' | 'small' = confirmed ? 'large' : 'small';
