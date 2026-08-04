@@ -404,6 +404,12 @@ export async function generateApplyInstructions(
     instruction = schemaInstruction?.trim() ?? 'Read context files, work through pending tasks, mark complete as you go.\nPause if you hit blockers or need clarification.';
   }
 
+  // Release hint: go-live matters belong in release.md (finalized by opsc release)
+  if (fs.existsSync(path.join(changeDir, 'release.md'))) {
+    instruction +=
+      '\n\n提示：上线发布事项（DDL/DML、配置修改、初始化动作、发布服务）请同步至 release.md；apply 完成后运行 `opsc release` 完善并定稿。';
+  }
+
   return {
     changeName,
     changeDir,

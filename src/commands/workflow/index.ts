@@ -22,6 +22,9 @@ export type { NewChangeOptions } from './new-change.js';
 export { refineCommand } from './refine.js';
 export type { RefineOptions } from './refine.js';
 
+export { releaseCommand } from './release.js';
+export type { ReleaseOptions } from './release.js';
+
 export { bugCommand } from './bug.js';
 export type { BugOptions } from './bug.js';
 

@@ -10,6 +10,7 @@ opsc new f17085-描述    # 新建变更（跟踪 ID 格式）
 opsc refine             # 完善环节（spec 前强制，产出 refine.md）
 opsc continue           # 创建工件（proposal/spec/design/tasks）
 opsc apply              # 实施任务
+opsc release            # 完善上线文档 release.md 并定稿（apply 后）
 opsc archive            # 归档变更
 opsc bug                # 创建 bug 文档
 opsc explore            # 探索模式（非强制）
@@ -31,4 +32,5 @@ node bin/opsc.js --help
 - 强制完善：spec 前必须完成 `refine.md`，所有判断基于代码决策，完成后冻结
 - 规模判定：refine 后由 agent 判定 + 用户确认；大型需求拆 `c1/`、`c2/` 子能力
 - Bug 管控：`bugs/b0001-<描述>.md`，不影响归档
-- 技能/命令：`opsc-new`、`opsc-refine`、`opsc-continue`、`opsc-apply`、`opsc-archive`、`opsc-explore`、`opsc-bug`、`opsc-grill`
+- 上线文档：`release.md`（`opsc new` 生成，design 阶段同步上线事项，apply 后 `opsc release` 定稿）
+- 技能/命令：`opsc-new`、`opsc-refine`、`opsc-release`、`opsc-continue`、`opsc-apply`、`opsc-archive`、`opsc-explore`、`opsc-bug`、`opsc-grill`

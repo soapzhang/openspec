@@ -106,6 +106,7 @@ export async function newChangeCommand(name: string | undefined, options: NewCha
     }
 
     spinner.succeed(`Created change '${changeName}' at openspec/changes/${changeName}/ (schema: ${result.schema})`);
+    console.log('已生成 release.md（上线文档，草稿）。');
     console.log('下一步：运行 `opsc refine` 进入强制完善环节（spec 之前）。');
   } catch (error) {
     spinner.fail(`Failed to create change '${changeName}'`);

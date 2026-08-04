@@ -24,6 +24,7 @@ import {
   schemasCommand,
   newChangeCommand,
   refineCommand,
+  releaseCommand,
   bugCommand,
   DEFAULT_SCHEMA,
   type StatusOptions,
@@ -32,6 +33,7 @@ import {
   type SchemasOptions,
   type NewChangeOptions,
   type RefineOptions,
+  type ReleaseOptions,
   type BugOptions,
   validateChangeExists,
   ensureChangeSize,
@@ -535,6 +537,21 @@ program
   .action(async (options: RefineOptions) => {
     try {
       await refineCommand(options);
+    } catch (error) {
+      console.log();
+      ora().fail(`Error: ${(error as Error).message}`);
+      process.exit(1);
+    }
+  });
+
+// Release command: finalize release.md after apply
+program
+  .command('release')
+  .description('完善上线文档 release.md 并置为定稿（必须 apply 完成后运行）')
+  .option('--change <id>', '变更名称')
+  .action(async (options: ReleaseOptions) => {
+    try {
+      await releaseCommand(options);
     } catch (error) {
       console.log();
       ora().fail(`Error: ${(error as Error).message}`);

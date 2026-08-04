@@ -110,6 +110,20 @@ opsc bug --change f17085-登录重构 --description "系统内部错误" \
 opsc explore
 ```
 
+## 上线（release，apply 后）
+
+`opsc new` 创建变更时自动生成 `release.md`（变更根目录，与 proposal/refine 平级）。design 阶段涉及上线发布的事项（DDL/DML、配置修改、初始化动作、发布服务前后端）MUST 同步写入；apply 完成后运行：
+
+```bash
+opsc release --change f17085-登录重构
+```
+
+- 前置：tasks.md 全部勾选（apply 完成），否则拒绝运行
+- 输入：`release.md` 现有内容 + 全部 design 文档（含子能力层）
+- 行为：逐节核对上线事项、标记条目状态（待执行/已执行/跳过），原地写回 `release.md`，不产生新文档
+- 定稿：完善后确认置为「定稿」；定稿后再次运行需先解锁（改回草稿）
+- 归档：release.md 随变更原样归档，作为上线记录
+
 ## 命令参考
 
 | 命令 | 说明 |
@@ -117,6 +131,7 @@ opsc explore
 | `opsc init` | 初始化项目，生成技能与命令 |
 | `opsc new [name]` | 新建变更（跟踪 ID 格式） |
 | `opsc refine` | 完善环节（spec 前强制） |
+| `opsc release` | 完善上线文档并定稿（apply 后） |
 | `opsc continue` | 状态 + 下一工件指令 |
 | `opsc apply` | 实施任务指令 |
 | `opsc archive` | 归档变更 |

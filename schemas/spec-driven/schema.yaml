@@ -107,6 +107,12 @@ artifacts:
       Reference the proposal for motivation and specs for requirements.
 
       Good design docs explain the "why" behind technical decisions.
+
+      **Release constraint**: When this design involves go-live matters —
+      DDL/DML SQL, config changes, initialization actions, or released services
+      (frontend/backend) — they MUST be written into the change's `release.md`
+      (change root, same level as proposal/refine). Do not leave them only in
+      design docs; `opsc release` finalizes release.md after apply.
     requires:
       - proposal
 

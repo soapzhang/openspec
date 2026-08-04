@@ -3,6 +3,7 @@ import { FileSystemUtils } from './file-system.js';
 import { writeChangeMetadata, validateSchemaName } from './change-metadata.js';
 import { readProjectConfig } from '../core/project-config.js';
 import { OPENSPEC_DIR_NAME } from '../core/config.js';
+import { getReleaseTemplate } from '../core/templates/release-template.js';
 
 const DEFAULT_SCHEMA = 'spec-driven';
 
@@ -164,6 +165,12 @@ export async function createChange(
 
   // Initialize bugs/ directory for bug tracking
   await FileSystemUtils.createDirectory(path.join(changeDir, 'bugs'));
+
+  // Initialize release.md go-live document (same level as proposal/refine)
+  const releasePath = path.join(changeDir, 'release.md');
+  if (!(await FileSystemUtils.fileExists(releasePath))) {
+    await FileSystemUtils.writeFile(releasePath, getReleaseTemplate(name));
+  }
 
   // Write metadata file with schema and creation date
   const today = new Date().toISOString().split('T')[0];

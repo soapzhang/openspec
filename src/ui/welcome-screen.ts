@@ -17,7 +17,7 @@ const ART_COLUMN_WIDTH = 24;
  */
 function getWelcomeText(): string[] {
   return [
-    chalk.white.bold('欢迎使用 OpenSpec'),
+    chalk.white.bold('欢迎使用 OpenSpec++'),
     chalk.dim('轻量级规范驱动开发框架'),
     '',
     chalk.white('此设置将配置：'),
