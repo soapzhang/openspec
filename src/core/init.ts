@@ -575,11 +575,6 @@ export class InitCommand {
     console.log('  /opsc:continue  创建下一个产物');
     console.log('  /opsc:apply     实施任务');
 
-    // Links
-    console.log();
-    console.log(`了解更多：${chalk.cyan('https://github.com/openspec-cn/openspec')}`);
-    console.log(`反馈：    ${chalk.cyan('https://github.com/openspec-cn/openspec/issues')}`);
-
     // Restart instruction if any tools were configured
     if (results.createdTools.length > 0 || results.refreshedTools.length > 0) {
       console.log();
