@@ -88,12 +88,15 @@ export async function bugCommand(options: BugOptions): Promise<void> {
       const { input } = await import('@inquirer/prompts');
       if (!status) status = await input({ message: '状态', default: '待处理' });
       if (!description) description = await input({ message: '描述', required: true });
-      if (!reason) reason = await input({ message: '原因' });
+      if (!reason) reason = await input({ message: '原因（根因分析，必填）', required: true });
       if (!fix) fix = await input({ message: '修改方案' });
     }
 
     if (!description) {
       throw new Error('Bug description is required');
+    }
+    if (!reason) {
+      throw new Error('Bug reason (原因) is required — analyze the root cause before creating the bug');
     }
 
     const slug = sanitizeFilename(description);
@@ -109,6 +112,10 @@ export async function bugCommand(options: BugOptions): Promise<void> {
     await fs.promises.writeFile(filePath, content, 'utf-8');
 
     spinner.succeed(`Created ${path.relative(projectRoot, filePath)}`);
+    console.log(chalk.bold('\n约束：根因先行，禁止直接修改。'));
+    console.log('1. 仅当根因分析（原因字段）完整且经用户确认后，才允许修改代码。');
+    console.log('2. 禁止在未分析根因、未经用户确认的情况下直接修改代码。');
+    console.log(chalk.dim('修复时通过修改 bug 文档的"状态"字段流转（待处理 → 修复中 → 已修复 → 已验证 → 已关闭）。'));
   } catch (error) {
     spinner.stop();
     throw error;

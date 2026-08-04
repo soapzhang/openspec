@@ -1585,8 +1585,14 @@ export function getBugSkillTemplate(): SkillTemplate {
 ## 流程
 
 1. 执行 \`opsc bug\`（CLI）或由 agent 直接创建。
-2. 填写四字段内容。
+2. 填写四字段内容（原因必填：先完成根因分析）。
 3. 写入 \`bugs/b<编号>-<描述>.md\`。
+
+## 约束：根因先行，禁止直接修改
+
+- bug MUST 先完成根因分析（原因字段必填，分析到根因），经用户确认后才允许修改代码。
+- 禁止在未分析根因、未经用户确认的情况下直接修改代码。
+- 修复前确认 \`bugs/b<编号>-<描述>.md\` 的原因字段已填写完整；确认修改方案后再动代码。
 
 ## 注意
 
@@ -1960,6 +1966,8 @@ export function getOpscBugCommandTemplate(): CommandTemplate {
    - File: \`bugs/b0001-<描述>.md\` — numbering auto-increments from \`b0001\`
 
 **Guardrails**
+- Root-cause first: analyze the root cause (原因 field, REQUIRED) and get user confirmation BEFORE modifying any code
+- Direct code modification without root-cause analysis and user confirmation is FORBIDDEN
 - Bug docs never block archiving (archive proceeds even with open bugs)
 - Update the 状态 field as the bug progresses`
   };
