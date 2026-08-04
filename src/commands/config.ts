@@ -25,7 +25,7 @@ import {
  */
 export function registerConfigCommand(program: Command): void {
   const configCmd = program
-    .command('config')
+    .command('config', { hidden: true })
     .description('View and modify global OpenSpec configuration')
     .option('--scope <scope>', 'Config scope (only "global" supported currently)')
     .hook('preAction', (thisCommand) => {

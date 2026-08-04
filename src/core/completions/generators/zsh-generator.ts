@@ -44,7 +44,7 @@ export class ZshGenerator implements CompletionGenerator {
     const helpers = ZSH_DYNAMIC_HELPERS;
 
     // Assemble final script with template literal
-    return `#compdef openspec
+    return `#compdef opsc
 
 # Zsh completion script for OpenSpec CLI
 # Auto-generated - do not edit manually
@@ -76,7 +76,7 @@ ${commandCases}
 
 ${commandFunctions}
 ${helpers}
-compdef _openspec openspec
+compdef _openspec opsc
 `;
   }
 

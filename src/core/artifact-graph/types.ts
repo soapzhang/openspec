@@ -49,6 +49,9 @@ export const ChangeMetadataSchema = z.object({
       message: 'created must be YYYY-MM-DD format',
     })
     .optional(),
+
+  // Optional: change scale determined after refine phase (large → capability splitting)
+  size: z.enum(['large', 'small']).optional(),
 });
 
 export type ChangeMetadata = z.infer<typeof ChangeMetadataSchema>;

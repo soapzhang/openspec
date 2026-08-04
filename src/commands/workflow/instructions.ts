@@ -8,6 +8,7 @@
 import ora from 'ora';
 import path from 'path';
 import * as fs from 'fs';
+import { OPENSPEC_DIR_NAME } from '../../core/config.js';
 import {
   loadChangeContext,
   generateInstructions,
@@ -17,6 +18,7 @@ import {
 import {
   validateChangeExists,
   validateSchemaExists,
+  checkRefineGate,
   type TaskItem,
   type ApplyInstructions,
 } from './shared.js';
@@ -65,6 +67,22 @@ export async function instructionsCommand(
       throw new Error(
         `Missing required argument <artifact>. Valid artifacts:\n  ${validIds.join('\n  ')}`
       );
+    }
+
+    // Refine gate: spec writing requires the mandatory refinement phase
+    if (artifactId === 'specs') {
+      const gate = checkRefineGate(projectRoot, changeName);
+      if (gate === 'blocked') {
+        spinner.stop();
+        throw new Error(
+          `变更 '${changeName}' 尚未完成完善环节（refine.md 缺失）。\n请先运行 \`opsc refine\` 完成强制完善阶段后再编写 spec。`
+        );
+      }
+      if (gate === 'warning') {
+        spinner.stop();
+        console.log('警告：该变更为旧格式（无 refine.md）。将按豁免处理，允许继续。');
+        spinner.start();
+      }
     }
 
     const artifact = context.graph.getArtifact(artifactId);
@@ -311,7 +329,7 @@ export async function generateApplyInstructions(
 ): Promise<ApplyInstructions> {
   // loadChangeContext will auto-detect schema from metadata if not provided
   const context = loadChangeContext(projectRoot, changeName, schemaName);
-  const changeDir = path.join(projectRoot, 'openspec', 'changes', changeName);
+  const changeDir = path.join(projectRoot, OPENSPEC_DIR_NAME, 'changes', changeName);
 
   // Get the full schema to access the apply phase configuration
   const schema = resolveSchema(context.schemaName, projectRoot);

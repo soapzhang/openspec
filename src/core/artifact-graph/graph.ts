@@ -67,9 +67,10 @@ export class ArtifactGraph {
 
   /**
    * Computes the topological build order using Kahn's algorithm.
-   * Returns artifact IDs in the order they should be built.
+   * Returns artifact IDs in the order they should be built (schema declaration order for ties).
    */
   getBuildOrder(): string[] {
+    const order = this.schema.artifacts.map((a) => a.id);
     const inDegree = new Map<string, number>();
     const dependents = new Map<string, string[]>();
 
@@ -86,10 +87,10 @@ export class ArtifactGraph {
       }
     }
 
-    // Start with roots (in-degree 0), sorted for determinism
+    // Start with roots (in-degree 0), sorted by schema declaration order
     const queue = [...this.artifacts.keys()]
       .filter(id => inDegree.get(id) === 0)
-      .sort();
+      .sort((a, b) => order.indexOf(a) - order.indexOf(b));
 
     const result: string[] = [];
 
@@ -97,7 +98,7 @@ export class ArtifactGraph {
       const current = queue.shift()!;
       result.push(current);
 
-      // Collect newly ready artifacts, then sort before adding
+      // Collect newly ready artifacts, then sort by schema declaration order before adding
       const newlyReady: string[] = [];
       for (const dep of dependents.get(current)!) {
         const newDegree = inDegree.get(dep)! - 1;
@@ -106,7 +107,7 @@ export class ArtifactGraph {
           newlyReady.push(dep);
         }
       }
-      queue.push(...newlyReady.sort());
+      queue.push(...newlyReady.sort((a, b) => order.indexOf(a) - order.indexOf(b)));
     }
 
     return result;
@@ -114,8 +115,10 @@ export class ArtifactGraph {
 
   /**
    * Gets artifacts that are ready to be created (all dependencies completed).
+   * Ordered by schema declaration order (not alphabetical).
    */
   getNextArtifacts(completed: CompletedSet): string[] {
+    const order = this.schema.artifacts.map((a) => a.id);
     const ready: string[] = [];
 
     for (const artifact of this.artifacts.values()) {
@@ -129,8 +132,8 @@ export class ArtifactGraph {
       }
     }
 
-    // Sort for deterministic ordering
-    return ready.sort();
+    // Sort by schema declaration order for deterministic, meaningful ordering
+    return ready.sort((a, b) => order.indexOf(a) - order.indexOf(b));
   }
 
   /**

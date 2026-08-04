@@ -9,22 +9,17 @@ import {
   getNewChangeSkillTemplate,
   getContinueChangeSkillTemplate,
   getApplyChangeSkillTemplate,
-  getFfChangeSkillTemplate,
-  getSyncSpecsSkillTemplate,
   getArchiveChangeSkillTemplate,
-  getBulkArchiveChangeSkillTemplate,
-  getVerifyChangeSkillTemplate,
-  getOnboardSkillTemplate,
-  getOpsxExploreCommandTemplate,
-  getOpsxNewCommandTemplate,
-  getOpsxContinueCommandTemplate,
-  getOpsxApplyCommandTemplate,
-  getOpsxFfCommandTemplate,
-  getOpsxSyncCommandTemplate,
-  getOpsxArchiveCommandTemplate,
-  getOpsxBulkArchiveCommandTemplate,
-  getOpsxVerifyCommandTemplate,
-  getOpsxOnboardCommandTemplate,
+  getRefineSkillTemplate,
+  getBugSkillTemplate,
+  getGrillSkillTemplate,
+  getOpscExploreCommandTemplate,
+  getOpscNewCommandTemplate,
+  getOpscRefineCommandTemplate,
+  getOpscBugCommandTemplate,
+  getOpscContinueCommandTemplate,
+  getOpscApplyCommandTemplate,
+  getOpscArchiveCommandTemplate,
   type SkillTemplate,
 } from '../templates/skill-templates.js';
 import type { CommandContent } from '../command-generation/index.js';
@@ -41,7 +36,7 @@ export interface SkillTemplateEntry {
  * Command template with ID mapping.
  */
 export interface CommandTemplateEntry {
-  template: ReturnType<typeof getOpsxExploreCommandTemplate>;
+  template: ReturnType<typeof getOpscExploreCommandTemplate>;
   id: string;
 }
 
@@ -50,16 +45,14 @@ export interface CommandTemplateEntry {
  */
 export function getSkillTemplates(): SkillTemplateEntry[] {
   return [
-    { template: getExploreSkillTemplate(), dirName: 'openspec-explore' },
-    { template: getNewChangeSkillTemplate(), dirName: 'openspec-new-change' },
-    { template: getContinueChangeSkillTemplate(), dirName: 'openspec-continue-change' },
-    { template: getApplyChangeSkillTemplate(), dirName: 'openspec-apply-change' },
-    { template: getFfChangeSkillTemplate(), dirName: 'openspec-ff-change' },
-    { template: getSyncSpecsSkillTemplate(), dirName: 'openspec-sync-specs' },
-    { template: getArchiveChangeSkillTemplate(), dirName: 'openspec-archive-change' },
-    { template: getBulkArchiveChangeSkillTemplate(), dirName: 'openspec-bulk-archive-change' },
-    { template: getVerifyChangeSkillTemplate(), dirName: 'openspec-verify-change' },
-    { template: getOnboardSkillTemplate(), dirName: 'openspec-onboard' },
+    { template: getExploreSkillTemplate(), dirName: 'opsc-explore' },
+    { template: getNewChangeSkillTemplate(), dirName: 'opsc-new' },
+    { template: getRefineSkillTemplate(), dirName: 'opsc-refine' },
+    { template: getContinueChangeSkillTemplate(), dirName: 'opsc-continue' },
+    { template: getApplyChangeSkillTemplate(), dirName: 'opsc-apply' },
+    { template: getArchiveChangeSkillTemplate(), dirName: 'opsc-archive' },
+    { template: getBugSkillTemplate(), dirName: 'opsc-bug' },
+    { template: getGrillSkillTemplate(), dirName: 'opsc-grill' },
   ];
 }
 
@@ -68,16 +61,13 @@ export function getSkillTemplates(): SkillTemplateEntry[] {
  */
 export function getCommandTemplates(): CommandTemplateEntry[] {
   return [
-    { template: getOpsxExploreCommandTemplate(), id: 'explore' },
-    { template: getOpsxNewCommandTemplate(), id: 'new' },
-    { template: getOpsxContinueCommandTemplate(), id: 'continue' },
-    { template: getOpsxApplyCommandTemplate(), id: 'apply' },
-    { template: getOpsxFfCommandTemplate(), id: 'ff' },
-    { template: getOpsxSyncCommandTemplate(), id: 'sync' },
-    { template: getOpsxArchiveCommandTemplate(), id: 'archive' },
-    { template: getOpsxBulkArchiveCommandTemplate(), id: 'bulk-archive' },
-    { template: getOpsxVerifyCommandTemplate(), id: 'verify' },
-    { template: getOpsxOnboardCommandTemplate(), id: 'onboard' },
+    { template: getOpscExploreCommandTemplate(), id: 'explore' },
+    { template: getOpscNewCommandTemplate(), id: 'new' },
+    { template: getOpscRefineCommandTemplate(), id: 'refine' },
+    { template: getOpscContinueCommandTemplate(), id: 'continue' },
+    { template: getOpscApplyCommandTemplate(), id: 'apply' },
+    { template: getOpscArchiveCommandTemplate(), id: 'archive' },
+    { template: getOpscBugCommandTemplate(), id: 'bug' },
   ];
 }
 

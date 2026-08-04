@@ -15,6 +15,7 @@ import {
   type RequirementBlock,
 } from './parsers/requirement-blocks.js';
 import { Validator } from './validation/validator.js';
+import { OPENSPEC_DIR_NAME } from './config.js';
 
 // -----------------------------------------------------------------------------
 // Types
@@ -382,8 +383,8 @@ export async function applySpecs(
     silent?: boolean;
   } = {}
 ): Promise<SpecsApplyOutput> {
-  const changeDir = path.join(projectRoot, 'openspec', 'changes', changeName);
-  const mainSpecsDir = path.join(projectRoot, 'openspec', 'specs');
+  const changeDir = path.join(projectRoot, OPENSPEC_DIR_NAME, 'changes', changeName);
+  const mainSpecsDir = path.join(projectRoot, OPENSPEC_DIR_NAME, 'specs');
 
   // Verify change exists
   try {

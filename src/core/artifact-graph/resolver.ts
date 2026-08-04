@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { getGlobalDataDir } from '../global-config.js';
 import { parseSchema, SchemaValidationError } from './schema.js';
 import type { SchemaYaml } from './types.js';
+import { OPENSPEC_DIR_NAME } from '../config.js';
 
 /**
  * Error thrown when loading a schema fails.
@@ -42,15 +43,15 @@ export function getUserSchemasDir(): string {
  * @returns The path to the project's schemas directory
  */
 export function getProjectSchemasDir(projectRoot: string): string {
-  return path.join(projectRoot, 'openspec', 'schemas');
+  return path.join(projectRoot, OPENSPEC_DIR_NAME, 'schemas');
 }
 
 /**
  * Resolves a schema name to its directory path.
  *
  * Resolution order (when projectRoot is provided):
- * 1. Project-local: <projectRoot>/openspec/schemas/<name>/schema.yaml
- * 2. User override: ${XDG_DATA_HOME}/openspec/schemas/<name>/schema.yaml
+ * 1. Project-local: <projectRoot>/opsc/schemas/<name>/schema.yaml
+ * 2. User override: ${XDG_DATA_HOME}/opsc/schemas/<name>/schema.yaml
  * 3. Package built-in: <package>/schemas/<name>/schema.yaml
  *
  * When projectRoot is not provided, only user override and package built-in are checked
@@ -94,8 +95,8 @@ export function getSchemaDir(
  * Resolves a schema name to a SchemaYaml object.
  *
  * Resolution order (when projectRoot is provided):
- * 1. Project-local: <projectRoot>/openspec/schemas/<name>/schema.yaml
- * 2. User override: ${XDG_DATA_HOME}/openspec/schemas/<name>/schema.yaml
+ * 1. Project-local: <projectRoot>/opsc/schemas/<name>/schema.yaml
+ * 2. User override: ${XDG_DATA_HOME}/opsc/schemas/<name>/schema.yaml
  * 3. Package built-in: <package>/schemas/<name>/schema.yaml
  *
  * When projectRoot is not provided, only user override and package built-in are checked

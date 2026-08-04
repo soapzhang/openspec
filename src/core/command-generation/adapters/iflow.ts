@@ -1,4 +1,4 @@
-/**
+﻿/**
  * iFlow Command Adapter
  *
  * Formats commands for iFlow following its frontmatter specification.
@@ -9,20 +9,20 @@ import type { CommandContent, ToolCommandAdapter } from '../types.js';
 
 /**
  * iFlow adapter for command generation.
- * File path: .iflow/commands/opsx-<id>.md
+ * File path: .iflow/commands/opsc-<id>.md
  * Frontmatter: name, id, category, description
  */
 export const iflowAdapter: ToolCommandAdapter = {
   toolId: 'iflow',
 
   getFilePath(commandId: string): string {
-    return path.join('.iflow', 'commands', `opsx-${commandId}.md`);
+    return path.join('.iflow', 'commands', `opsc-${commandId}.md`);
   },
 
   formatFile(content: CommandContent): string {
     return `---
-name: /opsx-${content.id}
-id: opsx-${content.id}
+name: /opsc-${content.id}
+id: opsc-${content.id}
 category: ${content.category}
 description: ${content.description}
 ---

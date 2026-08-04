@@ -10,6 +10,7 @@ import path from 'path';
 import * as fs from 'fs';
 import { getSchemaDir, listSchemas } from '../../core/artifact-graph/index.js';
 import { validateChangeName } from '../../utils/change-utils.js';
+import { OPENSPEC_DIR_NAME } from '../../core/config.js';
 
 // -----------------------------------------------------------------------------
 // Types
@@ -94,7 +95,7 @@ export async function validateChangeExists(
   changeName: string | undefined,
   projectRoot: string
 ): Promise<string> {
-  const changesPath = path.join(projectRoot, 'openspec', 'changes');
+  const changesPath = path.join(projectRoot, OPENSPEC_DIR_NAME, 'changes');
 
   // Get all change directories (not just those with proposal.md)
   const getAvailableChanges = async (): Promise<string[]> => {
@@ -111,7 +112,7 @@ export async function validateChangeExists(
   if (!changeName) {
     const available = await getAvailableChanges();
     if (available.length === 0) {
-      throw new Error('No changes found. Create one with: openspec new change <name>');
+      throw new Error('No changes found. Create one with: opsc new change <name>');
     }
     throw new Error(
       `Missing required option --change. Available changes:\n  ${available.join('\n  ')}`
@@ -132,7 +133,7 @@ export async function validateChangeExists(
     const available = await getAvailableChanges();
     if (available.length === 0) {
       throw new Error(
-        `Change '${changeName}' not found. No changes exist. Create one with: openspec new change <name>`
+        `Change '${changeName}' not found. No changes exist. Create one with: opsc new change <name>`
       );
     }
     throw new Error(
@@ -158,4 +159,63 @@ export function validateSchemaExists(schemaName: string, projectRoot?: string): 
     );
   }
   return schemaName;
+}
+
+/**
+ * Checks the refine phase gate before spec writing.
+ *
+ * - 'ok': refine.md exists, proceed
+ * - 'blocked': refine.md missing for a tracking-ID change (mandatory refinement)
+ * - 'warning': refine.md missing for a legacy kebab-case change (exempt, warn only)
+ */
+export function checkRefineGate(projectRoot: string, changeName: string): 'ok' | 'blocked' | 'warning' {
+  const changeDir = path.join(projectRoot, OPENSPEC_DIR_NAME, 'changes', changeName);
+  if (fs.existsSync(path.join(changeDir, 'refine.md'))) {
+    return 'ok';
+  }
+  if (changeName.startsWith('f')) {
+    return 'blocked';
+  }
+  return 'warning';
+}
+
+/**
+ * Resolves the change scale (large/small) after the refine phase.
+ *
+ * - Reads metadata `size` if already set (no re-prompt).
+ * - Returns undefined when refine.md is missing or in non-interactive mode
+ *   (agent decides in the skill layer).
+ * - Prompts the user for forced confirmation in interactive mode.
+ */
+export async function ensureChangeSize(
+  projectRoot: string,
+  changeName: string
+): Promise<'large' | 'small' | undefined> {
+  const changeDir = path.join(projectRoot, OPENSPEC_DIR_NAME, 'changes', changeName);
+  const { readChangeMetadata, writeChangeMetadata } = await import('../../utils/change-metadata.js');
+
+  const existing = readChangeMetadata(changeDir, projectRoot);
+  if (existing?.size) {
+    return existing.size;
+  }
+
+  // Size judgment happens only after refine completes
+  if (!fs.existsSync(path.join(changeDir, 'refine.md'))) {
+    return undefined;
+  }
+
+  if (!process.stdin.isTTY) {
+    return undefined;
+  }
+
+  const { select, confirm } = await import('@inquirer/prompts');
+  const confirmed = await confirm({
+    message: '根据完善信息，此变更规模如何？(large 将拆分子能力 c1/c2…)',
+    default: false,
+  });
+  const size: 'large' | 'small' = confirmed ? 'large' : 'small';
+
+  const base = existing ?? { schema: 'spec-driven' };
+  writeChangeMetadata(changeDir, { ...base, size }, projectRoot);
+  return size;
 }

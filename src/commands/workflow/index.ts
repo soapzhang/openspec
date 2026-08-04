@@ -19,4 +19,10 @@ export type { SchemasOptions } from './schemas.js';
 export { newChangeCommand } from './new-change.js';
 export type { NewChangeOptions } from './new-change.js';
 
-export { DEFAULT_SCHEMA } from './shared.js';
+export { refineCommand } from './refine.js';
+export type { RefineOptions } from './refine.js';
+
+export { bugCommand } from './bug.js';
+export type { BugOptions } from './bug.js';
+
+export { DEFAULT_SCHEMA, validateChangeExists, ensureChangeSize } from './shared.js';

@@ -2,6 +2,7 @@ import path from 'path';
 import { FileSystemUtils } from './file-system.js';
 import { writeChangeMetadata, validateSchemaName } from './change-metadata.js';
 import { readProjectConfig } from '../core/project-config.js';
+import { OPENSPEC_DIR_NAME } from '../core/config.js';
 
 const DEFAULT_SCHEMA = 'spec-driven';
 
@@ -30,28 +31,40 @@ export interface ValidationResult {
 }
 
 /**
- * Validates that a change name follows kebab-case conventions.
+ * Validates that a change name follows kebab-case or tracking-ID conventions.
  *
  * Valid names:
- * - Start with a lowercase letter
- * - Contain only lowercase letters, numbers, and hyphens
- * - Do not start or end with a hyphen
- * - Do not contain consecutive hyphens
+ * - kebab-case: lowercase letters, numbers, hyphens (e.g., 'add-auth')
+ * - tracking ID: `f<ID>-<description>` where ID is alphanumeric and
+ *   description is non-empty and free of reserved path characters
+ *   (e.g., 'f17085-login-refactor', 'f20260803-登录重构')
  *
  * @param name - The change name to validate
  * @returns Validation result with `valid: true` or `valid: false` with an error message
  *
  * @example
  * validateChangeName('add-auth') // { valid: true }
+ * validateChangeName('f17085-login') // { valid: true }
+ * validateChangeName('f20260803-登录重构') // { valid: true }
  * validateChangeName('Add-Auth') // { valid: false, error: '...' }
  */
 export function validateChangeName(name: string): ValidationResult {
-  // Pattern: starts with lowercase letter, followed by lowercase letters/numbers,
+  // kebab-case pattern: starts with lowercase letter, followed by lowercase letters/numbers,
   // optionally followed by hyphen + lowercase letters/numbers (repeatable)
   const kebabCasePattern = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
+  // Tracking ID pattern: f<alphanumeric ID>-<non-empty description without reserved chars>
+  const trackingIdPattern = /^f[A-Za-z0-9]+-.+$/;
+  const reservedChars = /[\\/:*?"<>|]/;
 
   if (!name) {
     return { valid: false, error: 'Change name cannot be empty' };
+  }
+
+  if (trackingIdPattern.test(name)) {
+    if (reservedChars.test(name)) {
+      return { valid: false, error: 'Change name cannot contain reserved characters: \\ / : * ? " < > |' };
+    }
+    return { valid: true };
   }
 
   if (!kebabCasePattern.test(name)) {
@@ -75,13 +88,13 @@ export function validateChangeName(name: string): ValidationResult {
       return { valid: false, error: 'Change name cannot contain consecutive hyphens' };
     }
     if (/[^a-z0-9-]/.test(name)) {
-      return { valid: false, error: 'Change name can only contain lowercase letters, numbers, and hyphens' };
+      return { valid: false, error: 'Change name can only contain lowercase letters, numbers, and hyphens (or use f<ID>-<描述> format)' };
     }
     if (/^[0-9]/.test(name)) {
       return { valid: false, error: 'Change name must start with a letter' };
     }
 
-    return { valid: false, error: 'Change name must follow kebab-case convention (e.g., add-auth, refactor-db)' };
+    return { valid: false, error: 'Change name must follow kebab-case convention (e.g., add-auth, refactor-db) or f<ID>-<描述> format (e.g., f17085-登录重构)' };
   }
 
   return { valid: true };
@@ -139,7 +152,7 @@ export async function createChange(
   validateSchemaName(schemaName, projectRoot);
 
   // Build the change directory path
-  const changeDir = path.join(projectRoot, 'openspec', 'changes', name);
+  const changeDir = path.join(projectRoot, OPENSPEC_DIR_NAME, 'changes', name);
 
   // Check if change already exists
   if (await FileSystemUtils.directoryExists(changeDir)) {
@@ -148,6 +161,9 @@ export async function createChange(
 
   // Create the directory (including parent directories if needed)
   await FileSystemUtils.createDirectory(changeDir);
+
+  // Initialize bugs/ directory for bug tracking
+  await FileSystemUtils.createDirectory(path.join(changeDir, 'bugs'));
 
   // Write metadata file with schema and creation date
   const today = new Date().toISOString().split('T')[0];

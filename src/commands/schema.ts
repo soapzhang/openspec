@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import ora from 'ora';
 import { stringify as stringifyYaml } from 'yaml';
+import { OPENSPEC_DIR_NAME } from '../core/config.js';
 import {
   getSchemaDir,
   getProjectSchemasDir,
@@ -289,7 +290,7 @@ const DEFAULT_ARTIFACTS: Array<{
  */
 export function registerSchemaCommand(program: Command): void {
   const schemaCmd = program
-    .command('schema')
+    .command('schema', { hidden: true })
     .description('Manage workflow schemas [experimental]');
 
   // Experimental warning
@@ -868,7 +869,7 @@ export function registerSchemaCommand(program: Command): void {
 
         // Update config if --default
         if (options?.default) {
-          const configPath = path.join(projectRoot, 'openspec', 'config.yaml');
+          const configPath = path.join(projectRoot, OPENSPEC_DIR_NAME, 'config.yaml');
 
           if (fs.existsSync(configPath)) {
             const { parse: parseYaml, stringify: stringifyYaml2 } = await import('yaml');

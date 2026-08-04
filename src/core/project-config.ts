@@ -2,6 +2,7 @@ import { existsSync, readFileSync, statSync } from 'fs';
 import path from 'path';
 import { parse as parseYaml } from 'yaml';
 import { z } from 'zod';
+import { OPENSPEC_DIR_NAME } from './config.js';
 
 /**
  * Zod schema for project configuration.
@@ -65,9 +66,9 @@ const MAX_CONTEXT_SIZE = 50 * 1024; // 50KB hard limit
  */
 export function readProjectConfig(projectRoot: string): ProjectConfig | null {
   // Try both .yaml and .yml, prefer .yaml
-  let configPath = path.join(projectRoot, 'openspec', 'config.yaml');
+  let configPath = path.join(projectRoot, OPENSPEC_DIR_NAME, 'config.yaml');
   if (!existsSync(configPath)) {
-    configPath = path.join(projectRoot, 'openspec', 'config.yml');
+    configPath = path.join(projectRoot, OPENSPEC_DIR_NAME, 'config.yml');
     if (!existsSync(configPath)) {
       return null; // No config is OK
     }

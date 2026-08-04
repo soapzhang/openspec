@@ -1,7 +1,7 @@
 /**
  * Init Command
  *
- * Sets up OpenSpec with Agent Skills and /opsx:* slash commands.
+ * Sets up OpenSpec with Agent Skills and /opsc:* slash commands.
  * This is the unified setup command that replaces both the old init and experimental commands.
  */
 
@@ -571,9 +571,9 @@ export class InitCommand {
     // Getting started
     console.log();
     console.log(chalk.bold('快速开始：'));
-    console.log('  /opsx:new       开始新的变更');
-    console.log('  /opsx:continue  创建下一个产物');
-    console.log('  /opsx:apply     实施任务');
+    console.log('  /opsc:new       开始新的变更');
+    console.log('  /opsc:continue  创建下一个产物');
+    console.log('  /opsc:apply     实施任务');
 
     // Links
     console.log();

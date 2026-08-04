@@ -1,4 +1,4 @@
-/**
+﻿/**
  * OpenCode Command Adapter
  *
  * Formats commands for OpenCode following its frontmatter specification.
@@ -10,14 +10,14 @@ import { transformToHyphenCommands } from '../../../utils/command-references.js'
 
 /**
  * OpenCode adapter for command generation.
- * File path: .opencode/command/opsx-<id>.md
+ * File path: .opencode/command/opsc-<id>.md
  * Frontmatter: description
  */
 export const opencodeAdapter: ToolCommandAdapter = {
   toolId: 'opencode',
 
   getFilePath(commandId: string): string {
-    return path.join('.opencode', 'command', `opsx-${commandId}.md`);
+    return path.join('.opencode', 'command', `opsc-${commandId}.md`);
   },
 
   formatFile(content: CommandContent): string {

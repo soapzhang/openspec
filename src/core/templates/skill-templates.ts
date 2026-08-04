@@ -23,11 +23,11 @@ export interface SkillTemplate {
  */
 export function getExploreSkillTemplate(): SkillTemplate {
   return {
-    name: 'openspec-explore',
+    name: 'opsc-explore',
     description: '进入探索模式——一个用于探索想法、调查问题和澄清需求的思考伙伴。当用户想要在变更之前或期间思考某些事情时使用。',
     instructions: `进入探索模式。深度思考。自由可视化。跟随对话的发展。
 
-**重要：探索模式用于思考，而非实施。** 你可以阅读文件、搜索代码和调查代码库，但你绝不能编写代码或实施功能。如果用户要求你实施某事，请提醒他们先退出探索模式（例如，使用 \`/opsx:new\` 或 \`/opsx:ff\` 开始一个变更）。如果用户要求，你可以创建 OpenSpec 产物（提案、设计、规范）——这是捕捉思考，而不是实施。
+**重要：探索模式用于思考，而非实施。** 你可以阅读文件、搜索代码和调查代码库，但你绝不能编写代码或实施功能。如果用户要求你实施某事，请提醒他们先退出探索模式（例如，使用 \`/opsc:new\` 或 \`/opsc:ff\` 开始一个变更）。如果用户要求，你可以创建 OpenSpec 产物（提案、设计、规范）——这是捕捉思考，而不是实施。
 
 **这是一种姿态，而不是工作流。** 没有固定的步骤，没有要求的顺序，没有强制的输出。你是帮助用户探索的思考伙伴。
 
@@ -98,7 +98,7 @@ export function getExploreSkillTemplate(): SkillTemplate {
 
 开始时，快速检查已存在的内容：
 \`\`\`bash
-openspec list --json
+opsc list --json
 \`\`\`
 
 这会告诉你：
@@ -111,7 +111,7 @@ openspec list --json
 自由思考。当见解具体化时，你可以提供：
 
 - "这感觉足够扎实，可以开始一个变更了。要我创建一个吗？"
-  → 可以过渡到 \`/opsx:new\` 或 \`/opsx:ff\`
+  → 可以过渡到 \`/opsc:new\` 或 \`/opsc:ff\`
 - 或者继续探索 - 没有正式化的压力
 
 ### 当变更存在时
@@ -119,9 +119,9 @@ openspec list --json
 如果用户提到变更或你检测到相关变更：
 
 1. **阅读现有产物以获取上下文**
-   - \`openspec/changes/<name>/proposal.md\`
-   - \`openspec/changes/<name>/design.md\`
-   - \`openspec/changes/<name>/tasks.md\`
+   - \`openspec++/changes/<name>/proposal.md\`
+   - \`openspec++/changes/<name>/design.md\`
+   - \`openspec++/changes/<name>/tasks.md\`
    - 等等。
 
 2. **在对话中自然地引用它们**
@@ -217,7 +217,7 @@ openspec list --json
 
 **用户在实施中途卡住：**
 \`\`\`
-用户：/opsx:explore add-auth-system
+用户：/opsc:explore add-auth-system
       OAuth 集成比预期的要复杂
 
 你：[阅读变更产物]
@@ -267,7 +267,7 @@ openspec list --json
 
 没有强制的结束。发现可能会：
 
-- **流入行动**："准备好开始了吗？ /opsx:new 或 /opsx:ff"
+- **流入行动**："准备好开始了吗？ /opsc:new 或 /opsc:ff"
 - **导致产物更新**："已用这些决定更新 design.md"
 - **仅提供清晰度**：用户得到了他们需要的，继续前进
 - **稍后继续**："我们可以随时继续"
@@ -284,8 +284,8 @@ openspec list --json
 **未决问题**：[如果还有]
 
 **下一步**（如果准备好了）：
-- 创建变更：/opsx:new <name>
-- 快进到任务：/opsx:ff <name>
+- 创建变更：/opsc:new <name>
+- 快进到任务：/opsc:ff <name>
 - 继续探索：继续交谈
 \`\`\`
 
@@ -311,15 +311,15 @@ openspec list --json
 
 /**
  * Template for openspec-new-change skill
- * Based on /opsx:new command
+ * Based on /opsc:new command
  */
 export function getNewChangeSkillTemplate(): SkillTemplate {
   return {
-    name: 'openspec-new-change',
+    name: 'opsc-new',
     description: '使用实验性产物工作流开始一个新的 OpenSpec 变更。当用户想要以结构化的分步方法创建新功能、修复或修改时使用。',
-    instructions: `使用实验性产物驱动方法开始一个新的变更。
+    instructions: `使用产物驱动方法开始一个新的变更（带跟踪 ID）。
 
-**输入**：用户的请求应包含变更名称（kebab-case）或他们想要构建的内容的描述。
+**输入**：用户请求应包含跟踪 ID（数字或字符串）与变更描述；只有描述时也可。
 
 **步骤**
 
@@ -328,71 +328,57 @@ export function getNewChangeSkillTemplate(): SkillTemplate {
    使用 **AskUserQuestion 工具**（开放式，无预设选项）询问：
    > "你想进行什么变更？描述你想构建或修复的内容。"
 
-   从他们的描述中，得出一个 kebab-case 名称（例如，"增加用户认证" → \`add-user-auth\`）。
+2. **确定跟踪 ID 与描述（强制）**
 
-   **重要**：在不了解用户想要构建什么之前，不要继续。
-
-2. **确定工作流 Schema**
-
-   使用默认 Schema（省略 \`--schema\`），除非用户明确请求不同的工作流。
-
-   **仅在用户提及时使用不同的 Schema：**
-   - 特定的 Schema 名称 → 使用 \`--schema <name>\`
-   - "显示工作流" 或 "什么工作流" → 运行 \`openspec schemas --json\` 并让他们选择
-
-   **否则**：省略 \`--schema\` 以使用默认值。
+   变更名 MUST 使用 \`f<跟踪ID>-<描述>\` 格式（如 \`f17085-登录重构\`）：
+   - 跟踪 ID：数字或字符串（如 17085、login）
+   - 描述必填（可为中文，如 登录重构）
+   - 用户未提供 ID 时，先引导提供；用户明确无法提供时，以当前日期兜底（\`f20260803-<描述>\`）
+   - 描述缺失时引导用户提供
 
 3. **创建变更目录**
+
+   非交互方式（供脚本/agent 使用）：
    \`\`\`bash
-   openspec new change "<name>"
+   opsc new "f17085-登录重构"
    \`\`\`
+   交互方式（用户终端）：直接运行 \`opsc new\`，按提示输入 ID 与描述。
    仅在用户请求特定工作流时添加 \`--schema <name>\`。
-   这将在 \`openspec/changes/<name>/\` 下创建一个使用所选 Schema 的脚手架变更。
+   这将在 \`openspec++/changes/f17085-登录重构/\` 下创建变更，含 \`bugs/\` 目录。
 
-4. **显示产物状态**
-   \`\`\`bash
-   openspec status --change "<name>"
-   \`\`\`
-   这显示了哪些产物需要创建，哪些已就绪（依赖关系已满足）。
+4. **提示进入完善环节（spec 前强制）**
 
-5. **获取第一个产物的指令**
-   第一个产物取决于 Schema（例如，spec-driven 的 \`proposal\`）。
-   检查状态输出，找到第一个状态为 "ready" 的产物。
-   \`\`\`bash
-   openspec instructions <first-artifact-id> --change "<name>"
-   \`\`\`
-   这输出创建第一个产物的模板和上下文。
+   告知用户下一步 MUST 执行 \`opsc refine --change <name>\`（完善环节），
+   收集信息、完善功能细节、产出 \`refine.md\` 后才能编写 spec。
+   完善环节要求所有判断基于代码决策，并调用 \`opsc-grill\` 追问。
 
-6. **停止并等待用户指示**
+5. **停止并等待用户指示**
 
 **输出**
 
 完成步骤后，总结：
-- 变更名称和位置
-- 正在使用的 Schema/工作流及其产物序列
-- 当前状态（0/N 产物完成）
-- 第一个产物的模板
-- 提示："准备好创建第一个产物了吗？只需描述这个变更的内容，我会起草它，或者你可以让我继续。"
+- 变更名称（含跟踪 ID）和位置
+- 下一步：运行 \`opsc refine\` 进入强制完善环节
+- 提示："准备好开始完善环节了吗？运行 /opsc:refine，或描述变更内容，我帮你起草 refine.md。"
 
 **护栏**
-- 不要创建任何产物 - 仅显示指令
-- 不要超越显示第一个产物模板
-- 如果名称无效（不是 kebab-case），要求一个有效名称
+- 必须携带跟踪 ID（\`f<ID>-描述\`）；缺失时引导提供或日期兜底
+- 不要跳过完善环节直接写 spec
 - 如果具有该名称的变更已存在，建议继续该变更
 - 如果使用非默认工作流，传递 --schema`,
     license: 'MIT',
-    compatibility: 'Requires openspec CLI.',
+    compatibility: 'Requires opsc CLI.',
     metadata: { author: 'openspec', version: '1.0' },
   };
 }
 
 /**
  * Template for openspec-continue-change skill
- * Based on /opsx:continue command
+ * Based on /opsc:continue command
  */
 export function getContinueChangeSkillTemplate(): SkillTemplate {
   return {
-    name: 'openspec-continue-change',
+    name: 'opsc-continue',
     description: '通过创建下一个产物继续处理 OpenSpec 变更。当用户想要推进他们的变更、创建下一个产物或继续他们的工作流时使用。',
     instructions: `通过创建下一个产物继续处理变更。
 
@@ -402,7 +388,7 @@ export function getContinueChangeSkillTemplate(): SkillTemplate {
 
 1. **如果没有提供变更名称，提示选择**
 
-   运行 \`openspec list --json\` 以获取按最近修改排序的可用变更。然后使用 **AskUserQuestion 工具** 让用户选择要处理哪个变更。
+   运行 \`opsc list --json\` 以获取按最近修改排序的可用变更。然后使用 **AskUserQuestion 工具** 让用户选择要处理哪个变更。
 
    提供前 3-4 个最近修改的变更作为选项，显示：
    - 变更名称
@@ -416,7 +402,7 @@ export function getContinueChangeSkillTemplate(): SkillTemplate {
 
 2. **检查当前状态**
    \`\`\`bash
-   openspec status --change "<name>" --json
+   opsc status --change "<name>" --json
    \`\`\`
    解析 JSON 以了解当前状态。响应包括：
    - \`schemaName\`：正在使用的工作流 Schema（例如，"spec-driven"）
@@ -439,7 +425,7 @@ export function getContinueChangeSkillTemplate(): SkillTemplate {
    - 从状态输出中选择第一个 \`status: "ready"\` 的产物
    - 获取其指令：
      \`\`\`bash
-     openspec instructions <artifact-id> --change "<name>" --json
+     opsc instructions <artifact-id> --change "<name>" --json
      \`\`\`
    - 解析 JSON。关键字段是：
      - \`context\`：项目背景（给你的约束 - 不要包含在输出中）
@@ -464,7 +450,7 @@ export function getContinueChangeSkillTemplate(): SkillTemplate {
 
 4. **创建产物后，显示进度**
    \`\`\`bash
-   openspec status --change "<name>"
+   opsc status --change "<name>"
    \`\`\`
 
 **输出**
@@ -513,7 +499,7 @@ export function getContinueChangeSkillTemplate(): SkillTemplate {
  */
 export function getApplyChangeSkillTemplate(): SkillTemplate {
   return {
-    name: 'openspec-apply-change',
+    name: 'opsc-apply',
     description: '实施 OpenSpec 变更中的任务。当用户想要开始实施、继续实施或处理任务时使用。',
     instructions: `实施 OpenSpec 变更中的任务。
 
@@ -526,13 +512,13 @@ export function getApplyChangeSkillTemplate(): SkillTemplate {
    如果提供了名称，使用它。否则：
    - 如果用户提到变更，从对话上下文中推断
    - 如果只有一个活跃变更，自动选择
-   - 如果模糊，运行 \`openspec list --json\` 获取可用变更，并使用 **AskUserQuestion 工具** 让用户选择
+   - 如果模糊，运行 \`opsc list --json\` 获取可用变更，并使用 **AskUserQuestion 工具** 让用户选择
 
-   始终宣布："正在使用变更：<name>" 以及如何覆盖（例如，\`/opsx:apply <other>\`）。
+   始终宣布："正在使用变更：<name>" 以及如何覆盖（例如，\`/opsc:apply <other>\`）。
 
 2. **检查状态以了解 Schema**
    \`\`\`bash
-   openspec status --change "<name>" --json
+   opsc status --change "<name>" --json
    \`\`\`
    解析 JSON 以了解：
    - \`schemaName\`：正在使用的工作流（例如，"spec-driven"）
@@ -541,7 +527,7 @@ export function getApplyChangeSkillTemplate(): SkillTemplate {
 3. **获取实施指令**
 
    \`\`\`bash
-   openspec instructions apply --change "<name>" --json
+   opsc instructions apply --change "<name>" --json
    \`\`\`
 
    这返回：
@@ -691,13 +677,13 @@ export function getFfChangeSkillTemplate(): SkillTemplate {
 
 2. **创建变更目录**
    \`\`\`bash
-   openspec new change "<name>"
+   opsc new change "<name>"
    \`\`\`
-   这将在 \`openspec/changes/<name>/\` 下创建一个脚手架变更。
+   这将在 \`openspec++/changes/<name>/\` 下创建一个脚手架变更。
 
 3. **获取产物构建顺序**
    \`\`\`bash
-   openspec status --change "<name>" --json
+   opsc status --change "<name>" --json
    \`\`\`
    解析 JSON 以获取：
    - \`applyRequires\`：实施前所需的产物 ID 数组（例如，\`["tasks"]\`）
@@ -712,7 +698,7 @@ export function getFfChangeSkillTemplate(): SkillTemplate {
    a. **对于每个 \`ready\`（依赖已满足）的产物**：
       - 获取指令：
         \`\`\`bash
-        openspec instructions <artifact-id> --change "<name>" --json
+        opsc instructions <artifact-id> --change "<name>" --json
         \`\`\`
       - 指令 JSON 包括：
         - \`context\`：项目背景（给你的约束 - 不要包含在输出中）
@@ -727,7 +713,7 @@ export function getFfChangeSkillTemplate(): SkillTemplate {
       - 显示简要进度："✓ Created <artifact-id>"
 
    b. **继续直到所有 \`applyRequires\` 产物都完成**
-      - 创建每个产物后，重新运行 \`openspec status --change "<name>" --json\`
+      - 创建每个产物后，重新运行 \`opsc status --change "<name>" --json\`
       - 检查 \`applyRequires\` 中的每个产物 ID 是否在产物数组中具有 \`status: "done"\`
       - 当所有 \`applyRequires\` 产物都完成时停止
 
@@ -737,7 +723,7 @@ export function getFfChangeSkillTemplate(): SkillTemplate {
 
 5. **显示最终状态**
    \`\`\`bash
-   openspec status --change "<name>"
+   opsc status --change "<name>"
    \`\`\`
 
 **输出**
@@ -746,11 +732,11 @@ export function getFfChangeSkillTemplate(): SkillTemplate {
 - 变更名称和位置
 - 已创建产物的列表及简要描述
 - 准备就绪："所有产物已创建！准备实施。"
-- 提示："运行 \`/opsx:apply\` 或让我实施以开始处理任务。"
+- 提示："运行 \`/opsc:apply\` 或让我实施以开始处理任务。"
 
 **产物创建指南**
 
-- 遵循每个产物类型的 \`openspec instructions\` 中的 \`instruction\` 字段
+- 遵循每个产物类型的 \`opsc instructions\` 中的 \`instruction\` 字段
 - Schema 定义了每个产物应包含的内容 - 遵循它
 - 在创建新产物之前阅读依赖产物以获取上下文
 - 使用 \`template\` 作为起点，根据上下文填充
@@ -788,7 +774,7 @@ export function getSyncSpecsSkillTemplate(): SkillTemplate {
 
 1. **如果没有提供变更名称，提示选择**
 
-   运行 \`openspec list --json\` 获取可用变更。使用 **AskUserQuestion 工具** 让用户选择。
+   运行 \`opsc list --json\` 获取可用变更。使用 **AskUserQuestion 工具** 让用户选择。
 
    显示具有增量规范（在 \`specs/\` 目录下）的变更。
 
@@ -796,7 +782,7 @@ export function getSyncSpecsSkillTemplate(): SkillTemplate {
 
 2. **查找增量规范**
 
-   在 \`openspec/changes/<name>/specs/*/spec.md\` 中查找增量规范文件。
+   在 \`openspec++/changes/<name>/specs/*/spec.md\` 中查找增量规范文件。
 
    每个增量规范文件包含如下部分：
    - \`## ADDED Requirements\` - 要添加的新需求
@@ -808,11 +794,11 @@ export function getSyncSpecsSkillTemplate(): SkillTemplate {
 
 3. **对于每个增量规范，将更改应用到主规范**
 
-   对于在 \`openspec/changes/<name>/specs/<capability>/spec.md\` 具有增量规范的每个 capability：
+   对于在 \`openspec++/changes/<name>/specs/<capability>/spec.md\` 具有增量规范的每个 capability：
 
    a. **阅读增量规范** 以了解预期的更改
 
-   b. **阅读主规范** \`openspec/specs/<capability>/spec.md\`（可能还不存在）
+   b. **阅读主规范** \`openspec++/specs/<capability>/spec.md\`（可能还不存在）
 
    c. **智能应用更改**：
 
@@ -835,7 +821,7 @@ export function getSyncSpecsSkillTemplate(): SkillTemplate {
       - 找到 FROM 需求，重命名为 TO
 
    d. **创建新主规范** 如果 capability 尚不存在：
-      - 创建 \`openspec/specs/<capability>/spec.md\`
+      - 创建 \`openspec++/specs/<capability>/spec.md\`
       - 添加 Purpose 部分（可以简短，标记为 TBD）
       - 添加 Requirements 部分包含 ADDED requirements
 
@@ -940,13 +926,13 @@ Before starting, check if the OpenSpec CLI is installed:
 
 \`\`\`bash
 # Unix/macOS
-openspec --version 2>&1 || echo "CLI_NOT_INSTALLED"
+opsc --version 2>&1 || echo "CLI_NOT_INSTALLED"
 # Windows (PowerShell)
-# if (Get-Command openspec -ErrorAction SilentlyContinue) { openspec --version } else { echo "CLI_NOT_INSTALLED" }
+# if (Get-Command openspec -ErrorAction SilentlyContinue) { opsc --version } else { echo "CLI_NOT_INSTALLED" }
 \`\`\`
 
 **If CLI not installed:**
-> OpenSpec CLI is not installed. Install it first, then come back to \`/opsx:onboard\`.
+> OpenSpec CLI is not installed. Install it first, then come back to \`/opsc:onboard\`.
 
 Stop here if not installed.
 
@@ -1073,7 +1059,7 @@ Spend 1-2 minutes investigating the relevant code:
 │   [Optional: ASCII diagram if helpful]  │
 └─────────────────────────────────────────┘
 
-Explore mode (\`/opsx:explore\`) is for this kind of thinking—investigating before implementing. You can use it anytime you need to think through a problem.
+Explore mode (\`/opsc:explore\`) is for this kind of thinking—investigating before implementing. You can use it anytime you need to think through a problem.
 
 Now let's create a change to hold our work.
 \`\`\`
@@ -1088,23 +1074,23 @@ Now let's create a change to hold our work.
 \`\`\`
 ## Creating a Change
 
-A "change" in OpenSpec is a container for all the thinking and planning around a piece of work. It lives in \`openspec/changes/<name>/\` and holds your artifacts—proposal, specs, design, tasks.
+A "change" in OpenSpec is a container for all the thinking and planning around a piece of work. It lives in \`openspec++/changes/<name>/\` and holds your artifacts—proposal, specs, design, tasks.
 
 Let me create one for our task.
 \`\`\`
 
 **DO:** Create the change with a derived kebab-case name:
 \`\`\`bash
-openspec new change "<derived-name>"
+opsc new change "<derived-name>"
 \`\`\`
 
 **SHOW:**
 \`\`\`
-Created: \`openspec/changes/<name>/\`
+Created: \`openspec++/changes/<name>/\`
 
 The folder structure:
 \`\`\`
-openspec/changes/<name>/
+openspec++/changes/<name>/
 ├── proposal.md    ← Why we're doing this (empty, we'll fill it)
 ├── design.md      ← How we'll build it (empty)
 ├── specs/         ← Detailed requirements (empty)
@@ -1164,9 +1150,9 @@ Does this capture the intent? I can adjust before we save it.
 
 After approval, save the proposal:
 \`\`\`bash
-openspec instructions proposal --change "<name>" --json
+opsc instructions proposal --change "<name>" --json
 \`\`\`
-Then write the content to \`openspec/changes/<name>/proposal.md\`.
+Then write the content to \`openspec++/changes/<name>/proposal.md\`.
 
 \`\`\`
 Proposal saved. This is your "why" document—you can always come back and refine it as understanding evolves.
@@ -1190,9 +1176,9 @@ For a small task like this, we might only need one spec file.
 **DO:** Create the spec file:
 \`\`\`bash
 # Unix/macOS
-mkdir -p openspec/changes/<name>/specs/<capability-name>
+mkdir -p openspec++/changes/<name>/specs/<capability-name>
 # Windows (PowerShell)
-# New-Item -ItemType Directory -Force -Path "openspec/changes/<name>/specs/<capability-name>"
+# New-Item -ItemType Directory -Force -Path "openspec++/changes/<name>/specs/<capability-name>"
 \`\`\`
 
 Draft the spec content:
@@ -1219,7 +1205,7 @@ Here's the spec:
 This format—WHEN/THEN/AND—makes requirements testable. You can literally read them as test cases.
 \`\`\`
 
-Save to \`openspec/changes/<name>/specs/<capability>/spec.md\`.
+Save to \`openspec++/changes/<name>/specs/<capability>/spec.md\`.
 
 ---
 
@@ -1264,7 +1250,7 @@ Here's the design:
 For a small task, this captures the key decisions without over-engineering.
 \`\`\`
 
-Save to \`openspec/changes/<name>/design.md\`.
+Save to \`openspec++/changes/<name>/design.md\`.
 
 ---
 
@@ -1302,7 +1288,7 @@ Each checkbox becomes a unit of work in the apply phase. Ready to implement?
 
 **PAUSE** - Wait for user to confirm they're ready to implement.
 
-Save to \`openspec/changes/<name>/tasks.md\`.
+Save to \`openspec++/changes/<name>/tasks.md\`.
 
 ---
 
@@ -1346,19 +1332,19 @@ The change is implemented! One more step—let's archive it.
 \`\`\`
 ## Archiving
 
-When a change is complete, we archive it. This moves it from \`openspec/changes/\` to \`openspec/changes/archive/YYYY-MM-DD-<name>/\`.
+When a change is complete, we archive it. This moves it from \`openspec++/changes/\` to \`openspec++/changes/archive/YYYY-MM-DD-<name>/\`.
 
 Archived changes become your project's decision history—you can always find them later to understand why something was built a certain way.
 \`\`\`
 
 **DO:**
 \`\`\`bash
-openspec archive "<name>"
+opsc archive "<name>"
 \`\`\`
 
 **SHOW:**
 \`\`\`
-Archived to: \`openspec/changes/archive/YYYY-MM-DD-<name>/\`
+Archived to: \`openspec++/changes/archive/YYYY-MM-DD-<name>/\`
 
 The change is now part of your project's history. The code is in your codebase, the decision record is preserved.
 \`\`\`
@@ -1389,19 +1375,19 @@ This same rhythm works for any size change—a small fix or a major feature.
 
 | Command | What it does |
 |---------|--------------|
-| \`/opsx:explore\` | Think through problems before/during work |
-| \`/opsx:new\` | Start a new change, step through artifacts |
-| \`/opsx:ff\` | Fast-forward: create all artifacts at once |
-| \`/opsx:continue\` | Continue working on an existing change |
-| \`/opsx:apply\` | Implement tasks from a change |
-| \`/opsx:verify\` | Verify implementation matches artifacts |
-| \`/opsx:archive\` | Archive a completed change |
+| \`/opsc:explore\` | Think through problems before/during work |
+| \`/opsc:new\` | Start a new change, step through artifacts |
+| \`/opsc:ff\` | Fast-forward: create all artifacts at once |
+| \`/opsc:continue\` | Continue working on an existing change |
+| \`/opsc:apply\` | Implement tasks from a change |
+| \`/opsc:verify\` | Verify implementation matches artifacts |
+| \`/opsc:archive\` | Archive a completed change |
 
 ---
 
 ## What's Next?
 
-Try \`/opsx:new\` or \`/opsx:ff\` on something you actually want to build. You've got the rhythm now!
+Try \`/opsc:new\` or \`/opsc:ff\` on something you actually want to build. You've got the rhythm now!
 \`\`\`
 
 ---
@@ -1413,11 +1399,11 @@ Try \`/opsx:new\` or \`/opsx:ff\` on something you actually want to build. You'v
 If the user says they need to stop, want to pause, or seem disengaged:
 
 \`\`\`
-No problem! Your change is saved at \`openspec/changes/<name>/\`.
+No problem! Your change is saved at \`openspec++/changes/<name>/\`.
 
 To pick up where we left off later:
-- \`/opsx:continue <name>\` - Resume artifact creation
-- \`/opsx:apply <name>\` - Jump to implementation (if tasks exist)
+- \`/opsc:continue <name>\` - Resume artifact creation
+- \`/opsc:apply <name>\` - Jump to implementation (if tasks exist)
 
 The work won't be lost. Come back whenever you're ready.
 \`\`\`
@@ -1433,15 +1419,15 @@ If the user says they just want to see the commands or skip the tutorial:
 
 | Command | What it does |
 |---------|--------------|
-| \`/opsx:explore\` | Think through problems (no code changes) |
-| \`/opsx:new <name>\` | Start a new change, step by step |
-| \`/opsx:ff <name>\` | Fast-forward: all artifacts at once |
-| \`/opsx:continue <name>\` | Continue an existing change |
-| \`/opsx:apply <name>\` | Implement tasks |
-| \`/opsx:verify <name>\` | Verify implementation |
-| \`/opsx:archive <name>\` | Archive when done |
+| \`/opsc:explore\` | Think through problems (no code changes) |
+| \`/opsc:new <name>\` | Start a new change, step by step |
+| \`/opsc:ff <name>\` | Fast-forward: all artifacts at once |
+| \`/opsc:continue <name>\` | Continue an existing change |
+| \`/opsc:apply <name>\` | Implement tasks |
+| \`/opsc:verify <name>\` | Verify implementation |
+| \`/opsc:archive <name>\` | Archive when done |
 
-Try \`/opsx:new\` to start your first change, or \`/opsx:ff\` if you want to move fast.
+Try \`/opsc:new\` to start your first change, or \`/opsc:ff\` if you want to move fast.
 \`\`\`
 
 Exit gracefully.
@@ -1472,22 +1458,140 @@ export interface CommandTemplate {
 }
 
 /**
- * Template for /opsx:explore slash command
+ * Template for opsc-refine skill
+ * Mandatory refinement phase before spec writing.
+ * Collects information, refines functionality and details, produces refine.md.
+ * All judgments MUST be grounded in code. Uses opsc-grill.
+ */
+export function getRefineSkillTemplate(): SkillTemplate {
+  return {
+    name: 'opsc-refine',
+    description: '强制完善环节（spec 之前）：收集信息、完善功能与细节，产出 refine.md。所有判断基于代码决策，全程调用 opsc-grill 追问。',
+    instructions: `# opsc-refine 完善环节
+
+**强制流程**：每个变更在编写 spec 之前，必须先完成完善环节，产出 \`refine.md\`。
+
+## 规约
+
+1. **所有判断基于代码决策**：凡可通过阅读/搜索代码查证的问题，必须先从代码取证，禁止凭空假设。
+2. **完善范围**：收集需求信息、完善功能点与细节、明确边界条件与验收标准。
+3. **grill 辅助**：全程调用 \`opsc-grill\` 技能逐题追问，直至需求细节收敛。
+4. **产出**：将收集的信息、功能细节、开放问题、代码取证记录结构化写入 \`refine.md\`。
+5. **冻结语义**：\`refine.md\` 在进入 proposal/spec 阶段后冻结，后续需求变更直接进入 proposal/spec，不反向修改 refine.md。
+
+## 流程
+
+1. 执行 \`opsc refine\`（CLI）创建 \`refine.md\` 模板。
+2. 阅读变更目录与相关代码，收集需求信息。
+3. 调用 \`opsc-grill\` 逐题追问用户（每次一问、附带选项、先代码取证）。
+4. 将追问结论、开放问题、代码证据写入 \`refine.md\`。
+5. 完成后告知用户运行 \`opsc continue\` 继续。`,
+  };
+}
+
+/**
+ * Template for opsc-bug skill
+ * Creates bug documents in the change's bugs/ directory.
+ * Numbering starts at b0001 and auto-increments.
+ */
+export function getBugSkillTemplate(): SkillTemplate {
+  return {
+    name: 'opsc-bug',
+    description: '在当前变更的 bugs/ 目录创建 bug 文档（b0001-<描述>.md 自动编号），内容含状态/描述/原因/修改方案。',
+    instructions: `# opsc-bug 技能
+
+在变更的 \`bugs/\` 目录创建 bug 文档。
+
+## 编号规则
+
+- 文件名格式：\`b<4位编号>-<描述>.md\`（如 \`b0001-系统内部错误.md\`）
+- 编号从 \`0001\` 开始，按现有 \`b\\d{4}-\` 前缀扫描自动递增，不重复
+
+## 文档结构
+
+每个 bug 文档包含四部分：
+
+- **状态**：待处理 / 修复中 / 已修复 / 已验证 / 已关闭
+- **描述**：bug 现象（用户报告内容）
+- **原因**：根因分析
+- **修改方案**：修复措施
+
+## 流程
+
+1. 执行 \`opsc bug\`（CLI）或由 agent 直接创建。
+2. 填写四字段内容。
+3. 写入 \`bugs/b<编号>-<描述>.md\`。
+
+## 注意
+
+- bug 的创建、记录与修改不影响变更归档（存在未关闭 bug 也可归档）。
+- 修复 bug 时通过修改"状态"字段流转。`,
+  };
+}
+
+/**
+ * Template for opsc-grill skill
+ * Independent interrogation skill, adapted from the open-source grill-me
+ * (mattpocock/skills + RobMitt/grill-me-skill, MIT license).
+ * Used mandatorily by opsc-refine; optionally usable at any time.
+ */
+export function getGrillSkillTemplate(): SkillTemplate {
+  return {
+    name: 'opsc-grill',
+    description: '拷问式追问技能：像面试官一样反复追问计划或设计，直至达成共同理解，逐条解决决策树分支。refine 环节强制使用，其他时机可选。基于开源 grill-me（MIT）。',
+    instructions: `# opsc-grill 技能
+
+基于开源 [grill-me](https://github.com/mattpocock/skills)（MIT）适配。像面试官一样反复追问用户的计划或设计，直至达成共同理解，逐条解决决策树分支。
+
+## 提问方式
+
+- **必须使用提问工具**（AskUserQuestion / 选项式弹窗），不要用纯文本提问
+- **每次只问一个**，等回答后再问下一个，保持聚焦
+- 每个问题提供 **2-4 个具体选项**（避免"是/否"空泛选项，除非问题真是二元的）
+- 用户始终可自定义输入（Other）
+
+## 代码优先规约
+
+- 凡能从代码库/文件查证的问题，**先自己探索**，不要问用户
+- 所有判断基于代码决策，禁止凭空假设
+
+## 流程
+
+1. 收到回答后，简短确认（1-2 句），立即问下一题
+2. 沿设计树逐分支收敛，解决决策间依赖
+3. 收敛后给出所有决策的结构化总结
+
+## OpenSpec 上下文
+
+- 在 refine 环节运行时，追问须围绕可写入 spec 的维度：功能边界、验收条件、数据流、错误处理
+- 结论以结构化形式输出（已确认决策 / 开放问题 / 代码取证记录），供 \`refine.md\` 承接
+
+## 使用时机
+
+- **强制**：\`opsc refine\` 完善环节
+- **可选**：任何需要被拷问的时刻（如 explore、方案评审）
+
+> 出处：mattpocock/skills 与 RobMitt/grill-me-skill，MIT License。`,
+  };
+}
+
+/**
+ * Template for /opsc:explore slash command
  * Explore mode - adaptive thinking partner
  */
-export function getOpsxExploreCommandTemplate(): CommandTemplate {
+export function getOpscExploreCommandTemplate(): CommandTemplate {
   return {
-    name: 'OPSX: Explore',
+    name: 'OPSC: Explore',
     description: 'Enter explore mode - think through ideas, investigate problems, clarify requirements',
     category: 'Workflow',
     tags: ['workflow', 'explore', 'experimental', 'thinking'],
     content: `Enter explore mode. Think deeply. Visualize freely. Follow the conversation wherever it goes.
 
-**IMPORTANT: Explore mode is for thinking, not implementing.** You may read files, search code, and investigate the codebase, but you must NEVER write code or implement features. If the user asks you to implement something, remind them to exit explore mode first (e.g., start a change with \`/opsx:new\` or \`/opsx:ff\`). You MAY create OpenSpec artifacts (proposals, designs, specs) if the user asks—that's capturing thinking, not implementing.
+**IMPORTANT: Explore mode is for thinking, not implementing.** You may read files, search code, and investigate the codebase, but you must NEVER write code or implement features. If the user asks you to implement something, remind them to exit explore mode first (e.g., start a change with \`/opsc:new\` or \`/opsc:ff\`). You MAY create OpenSpec artifacts (proposals, designs, specs) if the user asks—that's capturing thinking, not implementing.
 
 **This is a stance, not a workflow.** There are no fixed steps, no required sequence, no mandatory outputs. You're a thinking partner helping the user explore.
 
-**Input**: The argument after \`/opsx:explore\` is whatever the user wants to think about. Could be:
+**Input**: The argument after \`/opsc:explore\` is whatever the user wants to think about. Could be:
 - A vague idea: "real-time collaboration"
 - A specific problem: "the auth system is getting unwieldy"
 - A change name: "add-dark-mode" (to explore in context of that change)
@@ -1562,7 +1666,7 @@ You have full context of the OpenSpec system. Use it naturally, don't force it.
 
 At the start, quickly check what exists:
 \`\`\`bash
-openspec list --json
+opsc list --json
 \`\`\`
 
 This tells you:
@@ -1577,7 +1681,7 @@ If the user mentioned a specific change name, read its artifacts for context.
 Think freely. When insights crystallize, you might offer:
 
 - "This feels solid enough to start a change. Want me to create one?"
-  → Can transition to \`/opsx:new\` or \`/opsx:ff\`
+  → Can transition to \`/opsc:new\` or \`/opsc:ff\`
 - Or keep exploring - no pressure to formalize
 
 ### When a change exists
@@ -1585,9 +1689,9 @@ Think freely. When insights crystallize, you might offer:
 If the user mentions a change or you detect one is relevant:
 
 1. **Read existing artifacts for context**
-   - \`openspec/changes/<name>/proposal.md\`
-   - \`openspec/changes/<name>/design.md\`
-   - \`openspec/changes/<name>/tasks.md\`
+   - \`openspec++/changes/<name>/proposal.md\`
+   - \`openspec++/changes/<name>/design.md\`
+   - \`openspec++/changes/<name>/tasks.md\`
    - etc.
 
 2. **Reference them naturally in conversation**
@@ -1629,7 +1733,7 @@ If the user mentions a change or you detect one is relevant:
 
 There's no required ending. Discovery might:
 
-- **Flow into action**: "Ready to start? \`/opsx:new\` or \`/opsx:ff\`"
+- **Flow into action**: "Ready to start? \`/opsc:new\` or \`/opsc:ff\`"
 - **Result in artifact updates**: "Updated design.md with these decisions"
 - **Just provide clarity**: User has what they need, moves on
 - **Continue later**: "We can pick this up anytime"
@@ -1652,17 +1756,17 @@ When things crystallize, you might offer a summary - but it's optional. Sometime
 }
 
 /**
- * Template for /opsx:new slash command
+ * Template for /opsc:new slash command
  */
-export function getOpsxNewCommandTemplate(): CommandTemplate {
+export function getOpscNewCommandTemplate(): CommandTemplate {
   return {
-    name: 'OPSX: New',
-    description: 'Start a new change using the experimental artifact workflow (OPSX)',
+    name: 'OPSC: New',
+    description: 'Start a new change using the experimental artifact workflow (OPSC)',
     category: 'Workflow',
     tags: ['workflow', 'artifacts', 'experimental'],
     content: `Start a new change using the experimental artifact-driven approach.
 
-**Input**: The argument after \`/opsx:new\` is the change name (kebab-case), OR a description of what the user wants to build.
+**Input**: The argument after \`/opsc:new\` is the change name (kebab-case), OR a description of what the user wants to build.
 
 **Steps**
 
@@ -1681,27 +1785,27 @@ export function getOpsxNewCommandTemplate(): CommandTemplate {
 
    **Use a different schema only if the user mentions:**
    - A specific schema name → use \`--schema <name>\`
-   - "show workflows" or "what workflows" → run \`openspec schemas --json\` and let them choose
+   - "show workflows" or "what workflows" → run \`opsc schemas --json\` and let them choose
 
    **Otherwise**: Omit \`--schema\` to use the default.
 
 3. **Create the change directory**
    \`\`\`bash
-   openspec new change "<name>"
+   opsc new change "<name>"
    \`\`\`
    Add \`--schema <name>\` only if the user requested a specific workflow.
-   This creates a scaffolded change at \`openspec/changes/<name>/\` with the selected schema.
+   This creates a scaffolded change at \`openspec++/changes/<name>/\` with the selected schema.
 
 4. **Show the artifact status**
    \`\`\`bash
-   openspec status --change "<name>"
+   opsc status --change "<name>"
    \`\`\`
    This shows which artifacts need to be created and which are ready (dependencies satisfied).
 
 5. **Get instructions for the first artifact**
    The first artifact depends on the schema. Check the status output to find the first artifact with status "ready".
    \`\`\`bash
-   openspec instructions <first-artifact-id> --change "<name>"
+   opsc instructions <first-artifact-id> --change "<name>"
    \`\`\`
    This outputs the template and context for creating the first artifact.
 
@@ -1714,35 +1818,105 @@ After completing the steps, summarize:
 - Schema/workflow being used and its artifact sequence
 - Current status (0/N artifacts complete)
 - The template for the first artifact
-- Prompt: "Ready to create the first artifact? Run \`/opsx:continue\` or just describe what this change is about and I'll draft it."
+- Prompt: "Ready to create the first artifact? Run \`/opsc:continue\` or just describe what this change is about and I'll draft it."
 
 **Guardrails**
 - Do NOT create any artifacts yet - just show the instructions
 - Do NOT advance beyond showing the first artifact template
 - If the name is invalid (not kebab-case), ask for a valid name
-- If a change with that name already exists, suggest using \`/opsx:continue\` instead
+- If a change with that name already exists, suggest using \`/opsc:continue\` instead
 - Pass --schema if using a non-default workflow`
   };
 }
 
 /**
- * Template for /opsx:continue slash command
+ * Template for /opsc:refine slash command
+ * Mandatory refinement phase before spec writing.
  */
-export function getOpsxContinueCommandTemplate(): CommandTemplate {
+export function getOpscRefineCommandTemplate(): CommandTemplate {
   return {
-    name: 'OPSX: Continue',
+    name: 'OPSC: Refine',
+    description: '完善环节：收集信息、完善功能与细节，产出 refine.md（spec 之前强制）',
+    category: 'Workflow',
+    tags: ['workflow', 'refine', 'artifacts'],
+    content: `Run the mandatory refinement phase for a change before spec writing.
+
+**Input**: Optionally specify a change name after \`/opsc:refine\` (e.g., \`/opsc:refine f17085-login\`). If omitted, infer from conversation context or prompt for available changes.
+
+**Steps**
+
+1. **Select the change** (if not provided)
+   Run \`opsc list --json\` and pick the change (most recently modified first).
+
+2. **Run the refine phase**
+   - Execute \`opsc refine --change <name>\` to create \`refine.md\`
+   - Collect requirements: goals, user input, relevant code evidence
+   - Refine functional details: feature points, edge cases, acceptance criteria
+   - **ALL judgments MUST be grounded in code** — explore the codebase before assuming
+   - Invoke the \`opsc-grill\` skill for relentless questioning (one question at a time, 2-4 options each, code-first)
+
+3. **Produce refine.md**
+   Write collected info, functional details, open questions, and code evidence into \`refine.md\` in the change directory.
+
+4. **Freeze semantics**
+   Once proposal/spec work starts, refine.md is frozen — later requirement changes go into proposal/spec, never back into refine.md.
+
+**Guardrails**
+- Do NOT skip refine and jump to spec writing
+- If refine.md already exists, it is frozen — do not modify it`
+  };
+}
+
+/**
+ * Template for /opsc:bug slash command
+ * Creates a bug document in the change's bugs/ directory.
+ */
+export function getOpscBugCommandTemplate(): CommandTemplate {
+  return {
+    name: 'OPSC: Bug',
+    description: '在当前变更的 bugs/ 目录创建 bug 文档（b0001-<描述>.md 自动编号）',
+    category: 'Workflow',
+    tags: ['workflow', 'bug', 'tracking'],
+    content: `Create a bug document in the current change's \`bugs/\` directory.
+
+**Input**: Optionally specify a change name after \`/opsc:bug\`. If omitted, infer from conversation context.
+
+**Steps**
+
+1. **Select the change** (if not provided)
+   Run \`opsc list --json\` and pick the change.
+
+2. **Collect bug info**
+   Gather: 状态（待处理/修复中/已修复/已验证/已关闭）、描述（现象，用户报告内容）、原因（根因）、修改方案（修复措施）。
+
+3. **Create the bug document**
+   - Execute \`opsc bug --change <name>\` (interactive) or provide fields via flags
+   - File: \`bugs/b0001-<描述>.md\` — numbering auto-increments from \`b0001\`
+
+**Guardrails**
+- Bug docs never block archiving (archive proceeds even with open bugs)
+- Update the 状态 field as the bug progresses`
+  };
+}
+
+/**
+ * Template for /opsc:continue slash command
+ */
+export function getOpscContinueCommandTemplate(): CommandTemplate {
+  return {
+    name: 'OPSC: Continue',
     description: 'Continue working on a change - create the next artifact (Experimental)',
     category: 'Workflow',
     tags: ['workflow', 'artifacts', 'experimental'],
     content: `Continue working on a change by creating the next artifact.
 
-**Input**: Optionally specify a change name after \`/opsx:continue\` (e.g., \`/opsx:continue add-auth\`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
+**Input**: Optionally specify a change name after \`/opsc:continue\` (e.g., \`/opsc:continue add-auth\`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
 **Steps**
 
 1. **If no change name provided, prompt for selection**
 
-   Run \`openspec list --json\` to get available changes sorted by most recently modified. Then use the **AskUserQuestion tool** to let the user select which change to work on.
+   Run \`opsc list --json\` to get available changes sorted by most recently modified. Then use the **AskUserQuestion tool** to let the user select which change to work on.
 
    Present the top 3-4 most recently modified changes as options, showing:
    - Change name
@@ -1756,7 +1930,7 @@ export function getOpsxContinueCommandTemplate(): CommandTemplate {
 
 2. **Check current status**
    \`\`\`bash
-   openspec status --change "<name>" --json
+   opsc status --change "<name>" --json
    \`\`\`
    Parse the JSON to understand current state. The response includes:
    - \`schemaName\`: The workflow schema being used (e.g., "spec-driven")
@@ -1770,7 +1944,7 @@ export function getOpsxContinueCommandTemplate(): CommandTemplate {
    **If all artifacts are complete (\`isComplete: true\`)**:
    - Congratulate the user
    - Show final status including the schema used
-   - Suggest: "All artifacts created! You can now implement this change with \`/opsx:apply\` or archive it with \`/opsx:archive\`."
+   - Suggest: "All artifacts created! You can now implement this change with \`/opsc:apply\` or archive it with \`/opsc:archive\`."
    - STOP
 
    ---
@@ -1779,7 +1953,7 @@ export function getOpsxContinueCommandTemplate(): CommandTemplate {
    - Pick the FIRST artifact with \`status: "ready"\` from the status output
    - Get its instructions:
      \`\`\`bash
-     openspec instructions <artifact-id> --change "<name>" --json
+     opsc instructions <artifact-id> --change "<name>" --json
      \`\`\`
    - Parse the JSON. The key fields are:
      - \`context\`: Project background (constraints for you - do NOT include in output)
@@ -1804,7 +1978,7 @@ export function getOpsxContinueCommandTemplate(): CommandTemplate {
 
 4. **After creating an artifact, show progress**
    \`\`\`bash
-   openspec status --change "<name>"
+   opsc status --change "<name>"
    \`\`\`
 
 **Output**
@@ -1814,7 +1988,7 @@ After each invocation, show:
 - Schema workflow being used
 - Current progress (N/M complete)
 - What artifacts are now unlocked
-- Prompt: "Run \`/opsx:continue\` to create the next artifact"
+- Prompt: "Run \`/opsc:continue\` to create the next artifact"
 
 **Artifact Creation Guidelines**
 
@@ -1845,17 +2019,17 @@ For other schemas, follow the \`instruction\` field from the CLI output.
 }
 
 /**
- * Template for /opsx:apply slash command
+ * Template for /opsc:apply slash command
  */
-export function getOpsxApplyCommandTemplate(): CommandTemplate {
+export function getOpscApplyCommandTemplate(): CommandTemplate {
   return {
-    name: 'OPSX: Apply',
+    name: 'OPSC: Apply',
     description: 'Implement tasks from an OpenSpec change (Experimental)',
     category: 'Workflow',
     tags: ['workflow', 'artifacts', 'experimental'],
     content: `Implement tasks from an OpenSpec change.
 
-**Input**: Optionally specify a change name (e.g., \`/opsx:apply add-auth\`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
+**Input**: Optionally specify a change name (e.g., \`/opsc:apply add-auth\`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
 **Steps**
 
@@ -1864,13 +2038,13 @@ export function getOpsxApplyCommandTemplate(): CommandTemplate {
    If a name is provided, use it. Otherwise:
    - Infer from conversation context if the user mentioned a change
    - Auto-select if only one active change exists
-   - If ambiguous, run \`openspec list --json\` to get available changes and use the **AskUserQuestion tool** to let the user select
+   - If ambiguous, run \`opsc list --json\` to get available changes and use the **AskUserQuestion tool** to let the user select
 
-   Always announce: "Using change: <name>" and how to override (e.g., \`/opsx:apply <other>\`).
+   Always announce: "Using change: <name>" and how to override (e.g., \`/opsc:apply <other>\`).
 
 2. **Check status to understand the schema**
    \`\`\`bash
-   openspec status --change "<name>" --json
+   opsc status --change "<name>" --json
    \`\`\`
    Parse the JSON to understand:
    - \`schemaName\`: The workflow being used (e.g., "spec-driven")
@@ -1879,7 +2053,7 @@ export function getOpsxApplyCommandTemplate(): CommandTemplate {
 3. **Get apply instructions**
 
    \`\`\`bash
-   openspec instructions apply --change "<name>" --json
+   opsc instructions apply --change "<name>" --json
    \`\`\`
 
    This returns:
@@ -1889,7 +2063,7 @@ export function getOpsxApplyCommandTemplate(): CommandTemplate {
    - Dynamic instruction based on current state
 
    **Handle states:**
-   - If \`state: "blocked"\` (missing artifacts): show message, suggest using \`/opsx:continue\`
+   - If \`state: "blocked"\` (missing artifacts): show message, suggest using \`/opsc:continue\`
    - If \`state: "all_done"\`: congratulate, suggest archive
    - Otherwise: proceed to implementation
 
@@ -1959,7 +2133,7 @@ Working on task 4/7: <task description>
 - [x] Task 2
 ...
 
-All tasks complete! You can archive this change with \`/opsx:archive\`.
+All tasks complete! You can archive this change with \`/opsc:archive\`.
 \`\`\`
 
 **Output On Pause (Issue Encountered)**
@@ -2003,17 +2177,17 @@ This skill supports the "actions on a change" model:
 
 
 /**
- * Template for /opsx:ff slash command
+ * Template for /opsc:ff slash command
  */
-export function getOpsxFfCommandTemplate(): CommandTemplate {
+export function getOpscFfCommandTemplate(): CommandTemplate {
   return {
-    name: 'OPSX: Fast Forward',
+    name: 'OPSC: Fast Forward',
     description: 'Create a change and generate all artifacts needed for implementation in one go',
     category: 'Workflow',
     tags: ['workflow', 'artifacts', 'experimental'],
     content: `Fast-forward through artifact creation - generate everything needed to start implementation.
 
-**Input**: The argument after \`/opsx:ff\` is the change name (kebab-case), OR a description of what the user wants to build.
+**Input**: The argument after \`/opsc:ff\` is the change name (kebab-case), OR a description of what the user wants to build.
 
 **Steps**
 
@@ -2028,13 +2202,13 @@ export function getOpsxFfCommandTemplate(): CommandTemplate {
 
 2. **Create the change directory**
    \`\`\`bash
-   openspec new change "<name>"
+   opsc new change "<name>"
    \`\`\`
-   This creates a scaffolded change at \`openspec/changes/<name>/\`.
+   This creates a scaffolded change at \`openspec++/changes/<name>/\`.
 
 3. **Get the artifact build order**
    \`\`\`bash
-   openspec status --change "<name>" --json
+   opsc status --change "<name>" --json
    \`\`\`
    Parse the JSON to get:
    - \`applyRequires\`: array of artifact IDs needed before implementation (e.g., \`["tasks"]\`)
@@ -2049,7 +2223,7 @@ export function getOpsxFfCommandTemplate(): CommandTemplate {
    a. **For each artifact that is \`ready\` (dependencies satisfied)**:
       - Get instructions:
         \`\`\`bash
-        openspec instructions <artifact-id> --change "<name>" --json
+        opsc instructions <artifact-id> --change "<name>" --json
         \`\`\`
       - The instructions JSON includes:
         - \`context\`: Project background (constraints for you - do NOT include in output)
@@ -2064,7 +2238,7 @@ export function getOpsxFfCommandTemplate(): CommandTemplate {
       - Show brief progress: "✓ Created <artifact-id>"
 
    b. **Continue until all \`applyRequires\` artifacts are complete**
-      - After creating each artifact, re-run \`openspec status --change "<name>" --json\`
+      - After creating each artifact, re-run \`opsc status --change "<name>" --json\`
       - Check if every artifact ID in \`applyRequires\` has \`status: "done"\` in the artifacts array
       - Stop when all \`applyRequires\` artifacts are done
 
@@ -2074,7 +2248,7 @@ export function getOpsxFfCommandTemplate(): CommandTemplate {
 
 5. **Show final status**
    \`\`\`bash
-   openspec status --change "<name>"
+   opsc status --change "<name>"
    \`\`\`
 
 **Output**
@@ -2083,11 +2257,11 @@ After completing all artifacts, summarize:
 - Change name and location
 - List of artifacts created with brief descriptions
 - What's ready: "All artifacts created! Ready for implementation."
-- Prompt: "Run \`/opsx:apply\` to start implementing."
+- Prompt: "Run \`/opsc:apply\` to start implementing."
 
 **Artifact Creation Guidelines**
 
-- Follow the \`instruction\` field from \`openspec instructions\` for each artifact type
+- Follow the \`instruction\` field from \`opsc instructions\` for each artifact type
 - The schema defines what each artifact should contain - follow it
 - Read dependency artifacts for context before creating new ones
 - Use the \`template\` as a starting point, filling in based on context
@@ -2107,7 +2281,7 @@ After completing all artifacts, summarize:
  */
 export function getArchiveChangeSkillTemplate(): SkillTemplate {
   return {
-    name: 'openspec-archive-change',
+    name: 'opsc-archive',
     description: '在实验性工作流中归档已完成的变更。当用户想要在实施完成后最终确定并归档变更时使用。',
     instructions: `在实验性工作流中归档已完成的变更。
 
@@ -2117,7 +2291,7 @@ export function getArchiveChangeSkillTemplate(): SkillTemplate {
 
 1. **如果没有提供变更名称，提示选择**
 
-   运行 \`openspec list --json\` 获取可用变更。使用 **AskUserQuestion 工具** 让用户选择。
+   运行 \`opsc list --json\` 获取可用变更。使用 **AskUserQuestion 工具** 让用户选择。
 
    仅显示活跃变更（未归档）。
    如果可用，包括每个变更使用的 Schema。
@@ -2126,7 +2300,7 @@ export function getArchiveChangeSkillTemplate(): SkillTemplate {
 
 2. **检查产物完成状态**
 
-   运行 \`openspec status --change "<name>" --json\` 检查产物完成情况。
+   运行 \`opsc status --change "<name>" --json\` 检查产物完成情况。
 
    解析 JSON 以了解：
    - \`schemaName\`：正在使用的工作流
@@ -2152,10 +2326,10 @@ export function getArchiveChangeSkillTemplate(): SkillTemplate {
 
 4. **评估增量规范同步状态**
 
-   检查 \`openspec/changes/<name>/specs/\` 中的增量规范。如果不存在，继续而不显示同步提示。
+   检查 \`openspec++/changes/<name>/specs/\` 中的增量规范。如果不存在，继续而不显示同步提示。
 
    **如果存在增量规范：**
-   - 将每个增量规范与 \`openspec/specs/<capability>/spec.md\` 中的对应主规范进行比较
+   - 将每个增量规范与 \`openspec++/specs/<capability>/spec.md\` 中的对应主规范进行比较
    - 确定将应用哪些更改（添加、修改、删除、重命名）
    - 在提示之前显示合并总结
 
@@ -2169,7 +2343,7 @@ export function getArchiveChangeSkillTemplate(): SkillTemplate {
 
    如果归档目录不存在，创建它：
    \`\`\`bash
-   mkdir -p openspec/changes/archive
+   mkdir -p openspec++/changes/archive
    \`\`\`
 
    使用当前日期生成目标名称：\`YYYY-MM-DD-<change-name>\`
@@ -2179,7 +2353,7 @@ export function getArchiveChangeSkillTemplate(): SkillTemplate {
    - 如果否：将变更目录移动到归档
 
    \`\`\`bash
-   mv openspec/changes/<name> openspec/changes/archive/YYYY-MM-DD-<name>
+   mv openspec++/changes/<name> openspec++/changes/archive/YYYY-MM-DD-<name>
    \`\`\`
 
 6. **显示总结**
@@ -2198,7 +2372,7 @@ export function getArchiveChangeSkillTemplate(): SkillTemplate {
 
 **变更：** <change-name>
 **Schema：** <schema-name>
-**归档至：** openspec/changes/archive/YYYY-MM-DD-<name>/
+**归档至：** openspec++/changes/archive/YYYY-MM-DD-<name>/
 **规范：** ✓ 已同步到主规范
 
 所有产物已完成。所有任务已完成。
@@ -2211,7 +2385,7 @@ export function getArchiveChangeSkillTemplate(): SkillTemplate {
 
 **变更：** <change-name>
 **Schema：** <schema-name>
-**归档至：** openspec/changes/archive/YYYY-MM-DD-<name>/
+**归档至：** openspec++/changes/archive/YYYY-MM-DD-<name>/
 **规范：** 无增量规范
 
 所有产物已完成。所有任务已完成。
@@ -2224,7 +2398,7 @@ export function getArchiveChangeSkillTemplate(): SkillTemplate {
 
 **变更：** <change-name>
 **Schema：** <schema-name>
-**归档至：** openspec/changes/archive/YYYY-MM-DD-<name>/
+**归档至：** openspec++/changes/archive/YYYY-MM-DD-<name>/
 **规范：** 同步已跳过（用户选择跳过）
 
 **警告：**
@@ -2241,7 +2415,7 @@ export function getArchiveChangeSkillTemplate(): SkillTemplate {
 ## 归档失败
 
 **变更：** <change-name>
-**目标：** openspec/changes/archive/YYYY-MM-DD-<name>/
+**目标：** openspec++/changes/archive/YYYY-MM-DD-<name>/
 
 目标归档目录已存在。
 
@@ -2253,7 +2427,7 @@ export function getArchiveChangeSkillTemplate(): SkillTemplate {
 
 **护栏**
 - 如果未提供，始终提示选择变更
-- 使用产物图 (openspec status --json) 进行完成检查
+- 使用产物图 (opsc status --json) 进行完成检查
 - 不要因警告阻止归档 - 只需通知并确认
 - 移动到归档时保留 .openspec.yaml（它随目录移动）
 - 显示发生的清晰总结
@@ -2283,7 +2457,7 @@ This skill allows you to batch-archive changes, handling spec conflicts intellig
 
 1. **Get active changes**
 
-   Run \`openspec list --json\` to get all active changes.
+   Run \`opsc list --json\` to get all active changes.
 
    If no active changes exist, inform user and stop.
 
@@ -2300,15 +2474,15 @@ This skill allows you to batch-archive changes, handling spec conflicts intellig
 
    For each selected change, collect:
 
-   a. **Artifact status** - Run \`openspec status --change "<name>" --json\`
+   a. **Artifact status** - Run \`opsc status --change "<name>" --json\`
       - Parse \`schemaName\` and \`artifacts\` list
       - Note which artifacts are \`done\` vs other states
 
-   b. **Task completion** - Read \`openspec/changes/<name>/tasks.md\`
+   b. **Task completion** - Read \`openspec++/changes/<name>/tasks.md\`
       - Count \`- [ ]\` (incomplete) vs \`- [x]\` (complete)
       - If no tasks file exists, note as "No tasks"
 
-   c. **Delta specs** - Check \`openspec/changes/<name>/specs/\` directory
+   c. **Delta specs** - Check \`openspec++/changes/<name>/specs/\` directory
       - List which capability specs exist
       - For each, extract requirement names (lines matching \`### Requirement: <name>\`)
 
@@ -2391,8 +2565,8 @@ This skill allows you to batch-archive changes, handling spec conflicts intellig
 
    b. **Perform the archive**:
       \`\`\`bash
-      mkdir -p openspec/changes/archive
-      mv openspec/changes/<name> openspec/changes/archive/YYYY-MM-DD-<name>
+      mkdir -p openspec++/changes/archive
+      mv openspec++/changes/<name> openspec++/changes/archive/YYYY-MM-DD-<name>
       \`\`\`
 
    c. **Track outcome** for each change:
@@ -2493,7 +2667,7 @@ Failed K changes:
 \`\`\`
 ## No Changes to Archive
 
-No active changes found. Use \`/opsx:new\` to create a new change.
+No active changes found. Use \`/opsc:new\` to create a new change.
 \`\`\`
 
 **Guardrails**
@@ -2515,11 +2689,11 @@ No active changes found. Use \`/opsx:new\` to create a new change.
 }
 
 /**
- * Template for /opsx:sync slash command
+ * Template for /opsc:sync slash command
  */
-export function getOpsxSyncCommandTemplate(): CommandTemplate {
+export function getOpscSyncCommandTemplate(): CommandTemplate {
   return {
-    name: 'OPSX: Sync',
+    name: 'OPSC: Sync',
     description: 'Sync delta specs from a change to main specs',
     category: 'Workflow',
     tags: ['workflow', 'specs', 'experimental'],
@@ -2527,13 +2701,13 @@ export function getOpsxSyncCommandTemplate(): CommandTemplate {
 
 This is an **agent-driven** operation - you will read delta specs and directly edit main specs to apply the changes. This allows intelligent merging (e.g., adding a scenario without copying the entire requirement).
 
-**Input**: Optionally specify a change name after \`/opsx:sync\` (e.g., \`/opsx:sync add-auth\`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
+**Input**: Optionally specify a change name after \`/opsc:sync\` (e.g., \`/opsc:sync add-auth\`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
 **Steps**
 
 1. **If no change name provided, prompt for selection**
 
-   Run \`openspec list --json\` to get available changes. Use the **AskUserQuestion tool** to let the user select.
+   Run \`opsc list --json\` to get available changes. Use the **AskUserQuestion tool** to let the user select.
 
    Show changes that have delta specs (under \`specs/\` directory).
 
@@ -2541,7 +2715,7 @@ This is an **agent-driven** operation - you will read delta specs and directly e
 
 2. **Find delta specs**
 
-   Look for delta spec files in \`openspec/changes/<name>/specs/*/spec.md\`.
+   Look for delta spec files in \`openspec++/changes/<name>/specs/*/spec.md\`.
 
    Each delta spec file contains sections like:
    - \`## ADDED Requirements\` - New requirements to add
@@ -2553,11 +2727,11 @@ This is an **agent-driven** operation - you will read delta specs and directly e
 
 3. **For each delta spec, apply changes to main specs**
 
-   For each capability with a delta spec at \`openspec/changes/<name>/specs/<capability>/spec.md\`:
+   For each capability with a delta spec at \`openspec++/changes/<name>/specs/<capability>/spec.md\`:
 
    a. **Read the delta spec** to understand the intended changes
 
-   b. **Read the main spec** at \`openspec/specs/<capability>/spec.md\` (may not exist yet)
+   b. **Read the main spec** at \`openspec++/specs/<capability>/spec.md\` (may not exist yet)
 
    c. **Apply changes intelligently**:
 
@@ -2580,7 +2754,7 @@ This is an **agent-driven** operation - you will read delta specs and directly e
       - Find the FROM requirement, rename to TO
 
    d. **Create new main spec** if capability doesn't exist yet:
-      - Create \`openspec/specs/<capability>/spec.md\`
+      - Create \`openspec++/specs/<capability>/spec.md\`
       - Add Purpose section (can be brief, mark as TBD)
       - Add Requirements section with the ADDED requirements
 
@@ -2669,7 +2843,7 @@ export function getVerifyChangeSkillTemplate(): SkillTemplate {
 
 1. **If no change name provided, prompt for selection**
 
-   Run \`openspec list --json\` to get available changes. Use the **AskUserQuestion tool** to let the user select.
+   Run \`opsc list --json\` to get available changes. Use the **AskUserQuestion tool** to let the user select.
 
    Show changes that have implementation tasks (tasks artifact exists).
    Include the schema used for each change if available.
@@ -2679,7 +2853,7 @@ export function getVerifyChangeSkillTemplate(): SkillTemplate {
 
 2. **Check status to understand the schema**
    \`\`\`bash
-   openspec status --change "<name>" --json
+   opsc status --change "<name>" --json
    \`\`\`
    Parse the JSON to understand:
    - \`schemaName\`: The workflow being used (e.g., "spec-driven")
@@ -2688,7 +2862,7 @@ export function getVerifyChangeSkillTemplate(): SkillTemplate {
 3. **Get the change directory and load artifacts**
 
    \`\`\`bash
-   openspec instructions apply --change "<name>" --json
+   opsc instructions apply --change "<name>" --json
    \`\`\`
 
    This returns the change directory and context files. Read all available artifacts from \`contextFiles\`.
@@ -2713,7 +2887,7 @@ export function getVerifyChangeSkillTemplate(): SkillTemplate {
      - Recommendation: "Complete task: <description>" or "Mark as done if already implemented"
 
    **Spec Coverage**:
-   - If delta specs exist in \`openspec/changes/<name>/specs/\`:
+   - If delta specs exist in \`openspec++/changes/<name>/specs/\`:
      - Extract all requirements (marked with "### Requirement:")
      - For each requirement:
        - Search codebase for keywords related to the requirement
@@ -2825,23 +2999,23 @@ Use clear markdown with:
 }
 
 /**
- * Template for /opsx:archive slash command
+ * Template for /opsc:archive slash command
  */
-export function getOpsxArchiveCommandTemplate(): CommandTemplate {
+export function getOpscArchiveCommandTemplate(): CommandTemplate {
   return {
-    name: 'OPSX: Archive',
+    name: 'OPSC: Archive',
     description: 'Archive a completed change in the experimental workflow',
     category: 'Workflow',
     tags: ['workflow', 'archive', 'experimental'],
     content: `Archive a completed change in the experimental workflow.
 
-**Input**: Optionally specify a change name after \`/opsx:archive\` (e.g., \`/opsx:archive add-auth\`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
+**Input**: Optionally specify a change name after \`/opsc:archive\` (e.g., \`/opsc:archive add-auth\`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
 **Steps**
 
 1. **If no change name provided, prompt for selection**
 
-   Run \`openspec list --json\` to get available changes. Use the **AskUserQuestion tool** to let the user select.
+   Run \`opsc list --json\` to get available changes. Use the **AskUserQuestion tool** to let the user select.
 
    Show only active changes (not already archived).
    Include the schema used for each change if available.
@@ -2850,7 +3024,7 @@ export function getOpsxArchiveCommandTemplate(): CommandTemplate {
 
 2. **Check artifact completion status**
 
-   Run \`openspec status --change "<name>" --json\` to check artifact completion.
+   Run \`opsc status --change "<name>" --json\` to check artifact completion.
 
    Parse the JSON to understand:
    - \`schemaName\`: The workflow being used
@@ -2876,10 +3050,10 @@ export function getOpsxArchiveCommandTemplate(): CommandTemplate {
 
 4. **Assess delta spec sync state**
 
-   Check for delta specs at \`openspec/changes/<name>/specs/\`. If none exist, proceed without sync prompt.
+   Check for delta specs at \`openspec++/changes/<name>/specs/\`. If none exist, proceed without sync prompt.
 
    **If delta specs exist:**
-   - Compare each delta spec with its corresponding main spec at \`openspec/specs/<capability>/spec.md\`
+   - Compare each delta spec with its corresponding main spec at \`openspec++/specs/<capability>/spec.md\`
    - Determine what changes would be applied (adds, modifications, removals, renames)
    - Show a combined summary before prompting
 
@@ -2893,7 +3067,7 @@ export function getOpsxArchiveCommandTemplate(): CommandTemplate {
 
    Create the archive directory if it doesn't exist:
    \`\`\`bash
-   mkdir -p openspec/changes/archive
+   mkdir -p openspec++/changes/archive
    \`\`\`
 
    Generate target name using current date: \`YYYY-MM-DD-<change-name>\`
@@ -2903,7 +3077,7 @@ export function getOpsxArchiveCommandTemplate(): CommandTemplate {
    - If no: Move the change directory to archive
 
    \`\`\`bash
-   mv openspec/changes/<name> openspec/changes/archive/YYYY-MM-DD-<name>
+   mv openspec++/changes/<name> openspec++/changes/archive/YYYY-MM-DD-<name>
    \`\`\`
 
 6. **Display summary**
@@ -2922,7 +3096,7 @@ export function getOpsxArchiveCommandTemplate(): CommandTemplate {
 
 **Change:** <change-name>
 **Schema:** <schema-name>
-**Archived to:** openspec/changes/archive/YYYY-MM-DD-<name>/
+**Archived to:** openspec++/changes/archive/YYYY-MM-DD-<name>/
 **Specs:** ✓ Synced to main specs
 
 All artifacts complete. All tasks complete.
@@ -2935,7 +3109,7 @@ All artifacts complete. All tasks complete.
 
 **Change:** <change-name>
 **Schema:** <schema-name>
-**Archived to:** openspec/changes/archive/YYYY-MM-DD-<name>/
+**Archived to:** openspec++/changes/archive/YYYY-MM-DD-<name>/
 **Specs:** No delta specs
 
 All artifacts complete. All tasks complete.
@@ -2948,7 +3122,7 @@ All artifacts complete. All tasks complete.
 
 **Change:** <change-name>
 **Schema:** <schema-name>
-**Archived to:** openspec/changes/archive/YYYY-MM-DD-<name>/
+**Archived to:** openspec++/changes/archive/YYYY-MM-DD-<name>/
 **Specs:** Sync skipped (user chose to skip)
 
 **Warnings:**
@@ -2965,7 +3139,7 @@ Review the archive if this was not intentional.
 ## Archive Failed
 
 **Change:** <change-name>
-**Target:** openspec/changes/archive/YYYY-MM-DD-<name>/
+**Target:** openspec++/changes/archive/YYYY-MM-DD-<name>/
 
 Target archive directory already exists.
 
@@ -2977,7 +3151,7 @@ Target archive directory already exists.
 
 **Guardrails**
 - Always prompt for change selection if not provided
-- Use artifact graph (openspec status --json) for completion checking
+- Use artifact graph (opsc status --json) for completion checking
 - Don't block archive on warnings - just inform and confirm
 - Preserve .openspec.yaml when moving to archive (it moves with the directory)
 - Show clear summary of what happened
@@ -2987,12 +3161,12 @@ Target archive directory already exists.
 }
 
 /**
- * Template for /opsx:onboard slash command
+ * Template for /opsc:onboard slash command
  * Guided onboarding through the complete OpenSpec workflow
  */
-export function getOpsxOnboardCommandTemplate(): CommandTemplate {
+export function getOpscOnboardCommandTemplate(): CommandTemplate {
   return {
-    name: 'OPSX: Onboard',
+    name: 'OPSC: Onboard',
     description: 'Guided onboarding - walk through a complete OpenSpec workflow cycle with narration',
     category: 'Workflow',
     tags: ['workflow', 'onboarding', 'tutorial', 'learning'],
@@ -3001,11 +3175,11 @@ export function getOpsxOnboardCommandTemplate(): CommandTemplate {
 }
 
 /**
- * Template for /opsx:bulk-archive slash command
+ * Template for /opsc:bulk-archive slash command
  */
-export function getOpsxBulkArchiveCommandTemplate(): CommandTemplate {
+export function getOpscBulkArchiveCommandTemplate(): CommandTemplate {
   return {
-    name: 'OPSX: Bulk Archive',
+    name: 'OPSC: Bulk Archive',
     description: 'Archive multiple completed changes at once',
     category: 'Workflow',
     tags: ['workflow', 'archive', 'experimental', 'bulk'],
@@ -3019,7 +3193,7 @@ This skill allows you to batch-archive changes, handling spec conflicts intellig
 
 1. **Get active changes**
 
-   Run \`openspec list --json\` to get all active changes.
+   Run \`opsc list --json\` to get all active changes.
 
    If no active changes exist, inform user and stop.
 
@@ -3036,15 +3210,15 @@ This skill allows you to batch-archive changes, handling spec conflicts intellig
 
    For each selected change, collect:
 
-   a. **Artifact status** - Run \`openspec status --change "<name>" --json\`
+   a. **Artifact status** - Run \`opsc status --change "<name>" --json\`
       - Parse \`schemaName\` and \`artifacts\` list
       - Note which artifacts are \`done\` vs other states
 
-   b. **Task completion** - Read \`openspec/changes/<name>/tasks.md\`
+   b. **Task completion** - Read \`openspec++/changes/<name>/tasks.md\`
       - Count \`- [ ]\` (incomplete) vs \`- [x]\` (complete)
       - If no tasks file exists, note as "No tasks"
 
-   c. **Delta specs** - Check \`openspec/changes/<name>/specs/\` directory
+   c. **Delta specs** - Check \`openspec++/changes/<name>/specs/\` directory
       - List which capability specs exist
       - For each, extract requirement names (lines matching \`### Requirement: <name>\`)
 
@@ -3127,8 +3301,8 @@ This skill allows you to batch-archive changes, handling spec conflicts intellig
 
    b. **Perform the archive**:
       \`\`\`bash
-      mkdir -p openspec/changes/archive
-      mv openspec/changes/<name> openspec/changes/archive/YYYY-MM-DD-<name>
+      mkdir -p openspec++/changes/archive
+      mv openspec++/changes/<name> openspec++/changes/archive/YYYY-MM-DD-<name>
       \`\`\`
 
    c. **Track outcome** for each change:
@@ -3229,7 +3403,7 @@ Failed K changes:
 \`\`\`
 ## No Changes to Archive
 
-No active changes found. Use \`/opsx:new\` to create a new change.
+No active changes found. Use \`/opsc:new\` to create a new change.
 \`\`\`
 
 **Guardrails**
@@ -3248,23 +3422,23 @@ No active changes found. Use \`/opsx:new\` to create a new change.
 }
 
 /**
- * Template for /opsx:verify slash command
+ * Template for /opsc:verify slash command
  */
-export function getOpsxVerifyCommandTemplate(): CommandTemplate {
+export function getOpscVerifyCommandTemplate(): CommandTemplate {
   return {
-    name: 'OPSX: Verify',
+    name: 'OPSC: Verify',
     description: 'Verify implementation matches change artifacts before archiving',
     category: 'Workflow',
     tags: ['workflow', 'verify', 'experimental'],
     content: `Verify that an implementation matches the change artifacts (specs, tasks, design).
 
-**Input**: Optionally specify a change name after \`/opsx:verify\` (e.g., \`/opsx:verify add-auth\`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
+**Input**: Optionally specify a change name after \`/opsc:verify\` (e.g., \`/opsc:verify add-auth\`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
 **Steps**
 
 1. **If no change name provided, prompt for selection**
 
-   Run \`openspec list --json\` to get available changes. Use the **AskUserQuestion tool** to let the user select.
+   Run \`opsc list --json\` to get available changes. Use the **AskUserQuestion tool** to let the user select.
 
    Show changes that have implementation tasks (tasks artifact exists).
    Include the schema used for each change if available.
@@ -3274,7 +3448,7 @@ export function getOpsxVerifyCommandTemplate(): CommandTemplate {
 
 2. **Check status to understand the schema**
    \`\`\`bash
-   openspec status --change "<name>" --json
+   opsc status --change "<name>" --json
    \`\`\`
    Parse the JSON to understand:
    - \`schemaName\`: The workflow being used (e.g., "spec-driven")
@@ -3283,7 +3457,7 @@ export function getOpsxVerifyCommandTemplate(): CommandTemplate {
 3. **Get the change directory and load artifacts**
 
    \`\`\`bash
-   openspec instructions apply --change "<name>" --json
+   opsc instructions apply --change "<name>" --json
    \`\`\`
 
    This returns the change directory and context files. Read all available artifacts from \`contextFiles\`.
@@ -3308,7 +3482,7 @@ export function getOpsxVerifyCommandTemplate(): CommandTemplate {
      - Recommendation: "Complete task: <description>" or "Mark as done if already implemented"
 
    **Spec Coverage**:
-   - If delta specs exist in \`openspec/changes/<name>/specs/\`:
+   - If delta specs exist in \`openspec++/changes/<name>/specs/\`:
      - Extract all requirements (marked with "### Requirement:")
      - For each requirement:
        - Search codebase for keywords related to the requirement

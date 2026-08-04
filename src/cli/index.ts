@@ -23,12 +23,18 @@ import {
   templatesCommand,
   schemasCommand,
   newChangeCommand,
+  refineCommand,
+  bugCommand,
   DEFAULT_SCHEMA,
   type StatusOptions,
   type InstructionsOptions,
   type TemplatesOptions,
   type SchemasOptions,
   type NewChangeOptions,
+  type RefineOptions,
+  type BugOptions,
+  validateChangeExists,
+  ensureChangeSize,
 } from '../commands/workflow/index.js';
 import { maybeShowTelemetryNotice, trackCommand, shutdown } from '../telemetry/index.js';
 
@@ -46,8 +52,8 @@ function getCommandPath(command: Command): string {
 
   while (current) {
     const name = current.name();
-    // Skip the root 'openspec' command
-    if (name && name !== 'openspec') {
+    // Skip the root 'opsc' command
+    if (name && name !== 'opsc') {
       names.unshift(name);
     }
     current = current.parent;
@@ -57,7 +63,7 @@ function getCommandPath(command: Command): string {
 }
 
 program
-  .name('openspec')
+  .name('opsc')
   .description('AI 原生规范驱动开发系统')
   .version(version);
 
@@ -152,7 +158,7 @@ program
   });
 
 program
-  .command('update [path]')
+  .command('update [path]', { hidden: true })
   .description('更新 OpenSpec 指令文件')
   .option('--force', '即使工具已最新也强制更新')
   .action(async (targetPath = '.', options?: { force?: boolean }) => {
@@ -168,7 +174,7 @@ program
   });
 
 program
-  .command('list')
+  .command('list', { hidden: true })
   .description('列出项目（默认列出变更）。使用 --specs 列出规范。')
   .option('--specs', '列出规范而不是变更')
   .option('--changes', '显式列出变更（默认）')
@@ -188,7 +194,7 @@ program
   });
 
 program
-  .command('view')
+  .command('view', { hidden: true })
   .description('显示规范和变更的交互式仪表盘')
   .action(async () => {
     try {
@@ -203,7 +209,7 @@ program
 
 // Change command with subcommands
 const changeCmd = program
-  .command('change')
+  .command('change', { hidden: true })
   .description('管理 OpenSpec 变更提案');
 
 // Deprecation notice for noun-based commands
@@ -286,7 +292,7 @@ registerSchemaCommand(program);
 
 // Top-level validate command
 program
-  .command('validate [item-name]')
+  .command('validate [item-name]', { hidden: true })
   .description('验证变更和规范')
   .option('--all', '验证所有变更和规范')
   .option('--changes', '验证所有变更')
@@ -309,7 +315,7 @@ program
 
 // Top-level show command
 program
-  .command('show [item-name]')
+  .command('show [item-name]', { hidden: true })
   .description('显示变更或规范')
   .option('--json', '输出 JSON')
   .option('--type <type>', '在模棱两可时指定项目类型：change|spec')
@@ -336,7 +342,7 @@ program
 
 // Feedback command
 program
-  .command('feedback <message>')
+  .command('feedback <message>', { hidden: true })
   .description('提交关于 OpenSpec 的反馈')
   .option('--body <text>', '反馈的详细描述')
   .action(async (message: string, options?: { body?: string }) => {
@@ -352,7 +358,7 @@ program
 
 // Completion command with subcommands
 const completionCmd = program
-  .command('completion')
+  .command('completion', { hidden: true })
   .description('管理 OpenSpec CLI 的 Shell 补全');
 
 completionCmd
@@ -419,7 +425,7 @@ program
 
 // Status command
 program
-  .command('status')
+  .command('status', { hidden: true })
   .description('显示变更的产物完成状态')
   .option('--change <id>', '要显示状态的变更名称')
   .option('--schema <name>', 'Schema 覆盖（从 config.yaml 自动检测）')
@@ -436,7 +442,7 @@ program
 
 // Instructions command
 program
-  .command('instructions [artifact]')
+  .command('instructions [artifact]', { hidden: true })
   .description('输出创建产物或应用任务的丰富指令')
   .option('--change <id>', '变更名称')
   .option('--schema <name>', 'Schema 覆盖（从 config.yaml 自动检测）')
@@ -458,7 +464,7 @@ program
 
 // Templates command
 program
-  .command('templates')
+  .command('templates', { hidden: true })
   .description('显示 Schema 中所有产物的解析模板路径')
   .option('--schema <name>', `使用的 Schema（默认：${DEFAULT_SCHEMA}）`)
   .option('--json', '输出将产物 ID 映射到模板路径的 JSON')
@@ -474,7 +480,7 @@ program
 
 // Schemas command
 program
-  .command('schemas')
+  .command('schemas', { hidden: true })
   .description('列出可用的工作流 Schema 及其描述')
   .option('--json', '输出 JSON（供 agent 使用）')
   .action(async (options: SchemasOptions) => {
@@ -488,7 +494,23 @@ program
   });
 
 // New command group with change subcommand
-const newCmd = program.command('new').description('创建新项目');
+const newCmd = program
+  .command('new [name]')
+  .description('创建新变更（跟踪 ID 格式 f<ID>-<描述>）');
+
+newCmd
+  .option('--description <text>', '添加到 README.md 的描述（kebab-case 名称时）')
+  .option('--schema <name>', `使用的工作流 Schema（默认：${DEFAULT_SCHEMA}）`);
+
+newCmd.action(async (name: string | undefined, options: NewChangeOptions) => {
+  try {
+    await newChangeCommand(name, options);
+  } catch (error) {
+    console.log();
+    ora().fail(`Error: ${(error as Error).message}`);
+    process.exit(1);
+  }
+});
 
 newCmd
   .command('change <name>')
@@ -503,6 +525,115 @@ newCmd
       ora().fail(`Error: ${(error as Error).message}`);
       process.exit(1);
     }
+  });
+
+// Refine command: mandatory refinement phase before spec
+program
+  .command('refine')
+  .description('启动完善环节，生成 refine.md（spec 之前强制）')
+  .option('--change <id>', '变更名称')
+  .action(async (options: RefineOptions) => {
+    try {
+      await refineCommand(options);
+    } catch (error) {
+      console.log();
+      ora().fail(`Error: ${(error as Error).message}`);
+      process.exit(1);
+    }
+  });
+
+// Bug command: create bug document in change's bugs/ directory
+program
+  .command('bug')
+  .description('在当前变更的 bugs/ 目录创建 bug 文档')
+  .option('--change <id>', '变更名称')
+  .option('--status <text>', '状态')
+  .option('--description <text>', '描述')
+  .option('--reason <text>', '原因')
+  .option('--fix <text>', '修改方案')
+  .action(async (options: BugOptions) => {
+    try {
+      await bugCommand(options);
+    } catch (error) {
+      console.log();
+      ora().fail(`Error: ${(error as Error).message}`);
+      process.exit(1);
+    }
+  });
+
+// Continue command: show status + next artifact instructions
+program
+  .command('continue')
+  .description('显示当前状态与下一个待创建产物的指令')
+  .option('--change <id>', '变更名称')
+  .option('--schema <name>', 'Schema 覆盖（从 config.yaml 自动检测）')
+  .action(async (options: StatusOptions) => {
+    try {
+      await statusCommand(options);
+      console.log();
+
+      const projectRoot = process.cwd();
+      const changeName = await validateChangeExists(options.change, projectRoot);
+      const { loadChangeContext } = await import('../core/artifact-graph/index.js');
+      const context = loadChangeContext(projectRoot, changeName, options.schema);
+      const nextIds = context.graph.getNextArtifacts(context.completed);
+      const next = nextIds[0];
+
+      if (!next) {
+        if (context.graph.getAllArtifacts().length === context.completed.size) {
+          console.log('所有工件已完成！可运行 `opsc apply` 实施或 `opsc archive` 归档。');
+        } else {
+          console.log('当前没有可创建的工件（前置依赖未满足）。请检查上方状态。');
+        }
+        return;
+      }
+
+      // Scale judgment: after refine, before proposal (user-forced confirmation)
+      if (next === 'proposal') {
+        const size = await ensureChangeSize(projectRoot, changeName);
+        if (size === 'large') {
+          console.log(
+            '规模判定：大型需求。将拆分子能力目录 c1/、c2/…（各含 proposal/spec/design/tasks），根目录仅保留主 proposal 与 refine.md。'
+          );
+        } else if (size === 'small') {
+          console.log('规模判定：简单需求。四件套（proposal/spec/design/tasks）将直接放在变更根目录。');
+        }
+        console.log();
+      }
+
+      await instructionsCommand(next, options);
+    } catch (error) {
+      console.log();
+      ora().fail(`Error: ${(error as Error).message}`);
+      process.exit(1);
+    }
+  });
+
+// Apply command: show apply instructions for task implementation
+program
+  .command('apply')
+  .description('显示实施任务的指令')
+  .option('--change <id>', '变更名称')
+  .option('--schema <name>', 'Schema 覆盖（从 config.yaml 自动检测）')
+  .option('--json', '输出 JSON')
+  .action(async (options: InstructionsOptions) => {
+    try {
+      await applyInstructionsCommand(options);
+    } catch (error) {
+      console.log();
+      ora().fail(`Error: ${(error as Error).message}`);
+      process.exit(1);
+    }
+  });
+
+// Explore command: output exploration guidance
+program
+  .command('explore')
+  .description('进入探索模式：思考与澄清需求（非强制，随时可用）')
+  .action(() => {
+    console.log('探索模式：思考先行。');
+    console.log('可阅读代码、搜索调查，但不实施功能。');
+    console.log('准备好后运行 `opsc new` 开始变更，或 `opsc refine` 进入完善环节。');
   });
 
 program.parse();
