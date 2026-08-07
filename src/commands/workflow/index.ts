@@ -28,4 +28,4 @@ export type { ReleaseOptions } from './release.js';
 export { bugCommand } from './bug.js';
 export type { BugOptions } from './bug.js';
 
-export { DEFAULT_SCHEMA, validateChangeExists, ensureChangeSize } from './shared.js';
+export { DEFAULT_SCHEMA, validateChangeExists, ensureChangeSize, detectScaleFromProposal } from './shared.js';

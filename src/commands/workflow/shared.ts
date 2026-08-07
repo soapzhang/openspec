@@ -204,18 +204,67 @@ export async function ensureChangeSize(
     return undefined;
   }
 
-  if (!process.stdin.isTTY) {
-    return undefined;
-  }
+	if (!process.stdin.isTTY) {
+		// Non-interactive mode: auto-detect from refine.md content
+		const size = detectScaleFromRefine(changeDir);
+		if (size) {
+			const base = existing ?? { schema: 'spec-driven' };
+			writeChangeMetadata(changeDir, { ...base, size }, projectRoot);
+		}
+		return size;
+	}
 
-  const { select, confirm } = await import('@inquirer/prompts');
-  const confirmed = await confirm({
-    message: '根据完善信息，此变更规模如何？(large 将拆分子能力 c1-<描述>/c2-<描述>…)',
-    default: false,
-  });
-  const size: 'large' | 'small' = confirmed ? 'large' : 'small';
+	const { select, confirm } = await import('@inquirer/prompts');
+	const confirmed = await confirm({
+		message: '根据完善信息，此变更规模如何？(large 将拆分子能力 c1-<描述>/c2-<描述>…)',
+		default: false,
+	});
+	const size: 'large' | 'small' = confirmed ? 'large' : 'small';
 
-  const base = existing ?? { schema: 'spec-driven' };
-  writeChangeMetadata(changeDir, { ...base, size }, projectRoot);
-  return size;
+	const base = existing ?? { schema: 'spec-driven' };
+	writeChangeMetadata(changeDir, { ...base, size }, projectRoot);
+	return size;
+}
+
+/**
+ * Auto-detect change scale from refine.md when non-interactive.
+ * Counts functional items under "## 功能细节" section.
+ * >= 3 items → 'large', otherwise → 'small'.
+ */
+function detectScaleFromRefine(changeDir: string): 'large' | 'small' {
+	const refinePath = path.join(changeDir, 'refine.md');
+	if (!fs.existsSync(refinePath)) return 'small';
+
+	try {
+		const content = fs.readFileSync(refinePath, 'utf-8');
+		const match = content.match(/##\s*功能细节\s*\n([\s\S]*?)(?=\n##|\n*$)/);
+		if (!match) return 'small';
+
+		const section = match[1];
+		const items = section.split('\n').filter(line => /^\s*-\s+/.test(line) && line.trim().length > 3);
+		return items.length >= 3 ? 'large' : 'small';
+	} catch {
+		return 'small';
+	}
+}
+
+/**
+ * Auto-detect change scale from proposal.md (for backfill after proposal created).
+ * Counts capability items under "### New Capabilities" section.
+ */
+export function detectScaleFromProposal(changeDir: string): 'large' | 'small' | undefined {
+	const proposalPath = path.join(changeDir, 'proposal.md');
+	if (!fs.existsSync(proposalPath)) return undefined;
+
+	try {
+		const content = fs.readFileSync(proposalPath, 'utf-8');
+		const match = content.match(/###\s*New\s+Capabilities\s*\n([\s\S]*?)(?=\n###|\n##\s|$)/);
+		if (!match) return undefined;
+
+		const section = match[1];
+		const items = section.split('\n').filter(line => /^\s*-\s+/.test(line) && line.trim().length > 3);
+		return items.length >= 3 ? 'large' : 'small';
+	} catch {
+		return undefined;
+	}
 }

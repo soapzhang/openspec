@@ -37,6 +37,7 @@ import {
   type BugOptions,
   validateChangeExists,
   ensureChangeSize,
+  detectScaleFromProposal,
 } from '../commands/workflow/index.js';
 import { maybeShowTelemetryNotice, trackCommand, shutdown } from '../telemetry/index.js';
 
@@ -616,6 +617,21 @@ program
           console.log('规模判定：简单需求。四件套（proposal/spec/design/tasks）将直接放在变更根目录。');
         }
         console.log();
+      }
+
+      // Scale backfill: when entering specs without prior size judgment (legacy proposal)
+      if (next === 'specs') {
+        const changeDir = path.join(projectRoot, 'openspec', 'changes', changeName);
+        const { readChangeMetadata, writeChangeMetadata } = await import('../utils/change-metadata.js');
+        const existing = readChangeMetadata(changeDir, projectRoot);
+        if (!existing?.size) {
+          const size = detectScaleFromProposal(changeDir) ?? 'small';
+          writeChangeMetadata(changeDir, { ...(existing ?? { schema: 'spec-driven' }), size }, projectRoot);
+          if (size === 'large') {
+            console.log('检测到大型需求（proposal Capabilities ≥ 3）。将拆分子能力目录 c1-<描述>/、c2-<描述>/…');
+            console.log();
+          }
+        }
       }
 
       await instructionsCommand(next, options);
