@@ -26,11 +26,12 @@ artifacts:
         > **推进结论：复杂需求**
         >
         > 拆分为 N 个子能力，每个子能力独立四件套目录：
-        > - <capability-name-1>
-        > - <capability-name-2>
+        > - c1-<capability-name>
+        > - c2-<capability-name>
         > - ...
         >
         > 根目录 proposal.md 为总览（Why + What Changes + 能力清单 + Impact）。
+        > 注意：目录名 = cN-<capability 原始名>，跟随用户语言习惯（英文 capability 则英文目录，中文则中文）。
         ```
 
         New Capabilities + Modified Capabilities ≥ 3 → 复杂需求。

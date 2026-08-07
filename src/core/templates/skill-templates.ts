@@ -478,17 +478,18 @@ export function getContinueChangeSkillTemplate(): SkillTemplate {
       \`\`\`
       changes/<name>/
       ├── proposal.md           # 总览（本文件）
-      ├── <capability-1>/       # 子能力独立四件套
+      ├── c1-<capability-1>/    # 子能力独立四件套
       │   ├── proposal.md
       │   ├── specs/<capability>/spec.md
       │   ├── design.md
       │   └── tasks.md
-      ├── <capability-2>/
+      ├── c2-<capability-2>/
       │   └── ...
       \`\`\`
-- **specs**：简单需求 → specs/\<capability\>/spec.md（变更根目录）；复杂需求 → \<capability\>/specs/\<capability\>/spec.md（子能力目录）。为每个 capability 创建一个 spec。
-- **design.md**：简单需求 → 变更根目录；复杂需求 → 每个子能力目录一份。
-- **tasks.md**：简单需求 → 变更根目录；复杂需求 → 每个子能力目录一份。
+- **specs**：简单需求 → specs/\<capability\>/spec.md（变更根目录）；复杂需求 → cN-\<capability\>/specs/\<capability\>/spec.md（子能力目录，N 从 1 递增）。为每个 capability 创建一个 spec。
+- **design.md**：简单需求 → 变更根目录；复杂需求 → 每个子能力目录一份（cN-\<capability\>/design.md）。
+- **tasks.md**：简单需求 → 变更根目录；复杂需求 → 每个子能力目录一份（cN-\<capability\>/tasks.md）。
+- **目录名跟随用户语言习惯**：capability 是英文则英文目录，中文则中文目录，不强制翻译。
 
 对于其他 Schema，遵循 CLI 输出中的 \`instruction\` 字段。
 

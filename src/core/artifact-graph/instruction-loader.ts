@@ -266,15 +266,22 @@ export function generateInstructions(
   if (metadata?.size === 'large' && ['specs', 'design', 'tasks'].includes(artifactId)) {
     const capabilities = parseCapabilitiesFromProposal(context.changeDir);
     if (capabilities.length > 0) {
-      outputPath = `${capabilities[0]}/${artifact.generates}`;
-      const capList = capabilities.map(c => `  - ${c}/${artifact.generates}`).join('\n');
+      outputPath = `c1-${capabilities[0]}/${artifact.generates}`;
+      const capList = capabilities
+        .map((c, i) => {
+          const dir = `c${i + 1}-${c}`;
+          return `  - ${dir}/${artifact.generates}`;
+        })
+        .join('\n');
+      const capNames = capabilities.map((c, i) => `c${i + 1}-${c}`).join(', ');
       instruction = [
         `**COMPLEX REQUIREMENT — sub-capability mode**`,
         ``,
-        `Create one per sub-capability directory (NOT at change root):`,
+        `Create one per sub-capability directory (NOT at change root).`,
+        `Directory name format: c<N>-<capability-name>`,
         capList,
         ``,
-        `Sub-capabilities: ${capabilities.join(', ')}`,
+        `Sub-capabilities: ${capNames}`,
         ``,
         artifact.instruction || '',
       ].join('\n');
