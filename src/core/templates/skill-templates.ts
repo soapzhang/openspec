@@ -470,10 +470,25 @@ export function getContinueChangeSkillTemplate(): SkillTemplate {
 
 **spec-driven schema** (proposal → specs → design → tasks):
 - **proposal.md**：如果不清楚，询问用户关于变更的信息。填写 Why, What Changes, Capabilities, Impact。
-  - Capabilities 部分至关重要 - 列出的每个 capability 都需要一个 spec 文件。
-- **specs/<capability>/spec.md**：为 proposal 的 Capabilities 部分中列出的每个 capability 创建一个 spec（使用 capability 名称，而不是变更名称）。
-- **design.md**：记录技术决策、架构和实施方法。
-- **tasks.md**：将实施分解为带复选框的任务。
+  - Capabilities 部分至关重要 — 列出的每个 capability 都需要一个 spec 文件。
+  - **规模判定**：创建 proposal 后，读取 Capabilities 中的推进结论。
+    - **简单需求** → 四件套（specs/design/tasks）直接放在变更根目录。
+    - **复杂需求** → 先为每个子能力创建目录（capability name = 目录名），每个目录含 proposal.md + specs/ + design.md + tasks.md。根目录 proposal.md 为总览。
+
+      \`\`\`
+      changes/<name>/
+      ├── proposal.md           # 总览（本文件）
+      ├── <capability-1>/       # 子能力独立四件套
+      │   ├── proposal.md
+      │   ├── specs/<capability>/spec.md
+      │   ├── design.md
+      │   └── tasks.md
+      ├── <capability-2>/
+      │   └── ...
+      \`\`\`
+- **specs**：简单需求 → specs/\<capability\>/spec.md（变更根目录）；复杂需求 → \<capability\>/specs/\<capability\>/spec.md（子能力目录）。为每个 capability 创建一个 spec。
+- **design.md**：简单需求 → 变更根目录；复杂需求 → 每个子能力目录一份。
+- **tasks.md**：简单需求 → 变更根目录；复杂需求 → 每个子能力目录一份。
 
 对于其他 Schema，遵循 CLI 输出中的 \`instruction\` 字段。
 
@@ -484,6 +499,7 @@ export function getContinueChangeSkillTemplate(): SkillTemplate {
 - 如果上下文不清楚，在创建之前询问用户
 - 在标记进度之前，验证写入后产物文件是否存在
 - 使用 Schema 的产物序列，不要假设特定的产物名称
+- **复杂需求**：创建 specs 前先建好所有子能力目录（含 proposal.md 草稿）
 - **重要**：\`context\` 和 \`rules\` 是给你的约束，不是文件内容
   - 不要将 \`<context>\`, \`<rules>\`, \`<project_context>\` 块复制到产物中
   - 这些指导你写什么，但绝不应出现在输出中`,

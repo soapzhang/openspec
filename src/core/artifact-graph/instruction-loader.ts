@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { getSchemaDir, resolveSchema } from './resolver.js';
 import { ArtifactGraph } from './graph.js';
 import { detectCompleted } from './state.js';
-import { resolveSchemaForChange } from '../../utils/change-metadata.js';
+import { resolveSchemaForChange, readChangeMetadata } from '../../utils/change-metadata.js';
 import { readProjectConfig, validateConfigRules } from '../project-config.js';
 import type { Artifact, CompletedSet } from './types.js';
 import { OPENSPEC_DIR_NAME } from '../config.js';
@@ -259,20 +259,78 @@ export function generateInstructions(
   const rulesForArtifact = projectConfig?.rules?.[artifactId];
   const configRules = rulesForArtifact && rulesForArtifact.length > 0 ? rulesForArtifact : undefined;
 
+  // Large mode: adjust output path and instruction for sub-capability structure
+  let outputPath = artifact.generates;
+  let instruction = artifact.instruction;
+  const metadata = readChangeMetadata(context.changeDir, context.projectRoot);
+  if (metadata?.size === 'large' && ['specs', 'design', 'tasks'].includes(artifactId)) {
+    const capabilities = parseCapabilitiesFromProposal(context.changeDir);
+    if (capabilities.length > 0) {
+      outputPath = `${capabilities[0]}/${artifact.generates}`;
+      const capList = capabilities.map(c => `  - ${c}/${artifact.generates}`).join('\n');
+      instruction = [
+        `**COMPLEX REQUIREMENT — sub-capability mode**`,
+        ``,
+        `Create one per sub-capability directory (NOT at change root):`,
+        capList,
+        ``,
+        `Sub-capabilities: ${capabilities.join(', ')}`,
+        ``,
+        artifact.instruction || '',
+      ].join('\n');
+    }
+  }
+
   return {
     changeName: context.changeName,
     artifactId: artifact.id,
     schemaName: context.schemaName,
     changeDir: context.changeDir,
-    outputPath: artifact.generates,
+    outputPath,
     description: artifact.description,
-    instruction: artifact.instruction,
+    instruction,
     context: configContext,
     rules: configRules,
     template: templateContent,
     dependencies,
     unlocks,
   };
+}
+
+/**
+ * Parse sub-capability names from proposal.md's Capabilities 推进结论 section.
+ * Looks for list items in the blockquote following "推进结论：复杂需求".
+ */
+function parseCapabilitiesFromProposal(changeDir: string): string[] {
+  const proposalPath = path.join(changeDir, 'proposal.md');
+  if (!fs.existsSync(proposalPath)) return [];
+
+  try {
+    const content = fs.readFileSync(proposalPath, 'utf-8');
+    // Match the blockquote after "推进结论：复杂需求"
+    const blockquoteMatch = content.match(/推进结论：复杂需求[\s\S]*?>\s*\n((?:>\s*-[^\n]*\n?)*)/);
+    if (!blockquoteMatch) {
+      // Fallback: match items from "### New Capabilities" section
+      const ncMatch = content.match(/###\s*New\s+Capabilities\s*\n([\s\S]*?)(?=\n###|\n##\s|$)/);
+      if (!ncMatch) return [];
+      const items = ncMatch[1].split('\n')
+        .filter(line => /^\s*-\s+`?(\*\*`?)?([a-z][a-z0-9-]*)/.test(line))
+        .map(line => {
+          const m = line.match(/`?([a-z][a-z0-9-]*)`?/);
+          return m ? m[1] : '';
+        })
+        .filter(Boolean);
+      return items;
+    }
+    const listSection = blockquoteMatch[1];
+    const items = listSection.split('\n')
+      .filter(line => /^\s*>\s*-\s+/.test(line))
+      .map(line => line.replace(/^\s*>\s*-\s+`?/, '').replace(/`$/, '').trim())
+      .filter(Boolean);
+    return items;
+  } catch {
+    return [];
+  }
 }
 
 /**
