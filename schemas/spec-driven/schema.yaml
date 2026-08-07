@@ -36,7 +36,7 @@ artifacts:
 
         New Capabilities + Modified Capabilities ≥ 3 → 复杂需求。
 
-        2. **New Capabilities**: List capabilities being introduced. Each becomes a sub-capability directory (if complex) or `specs/<name>/spec.md` (if simple). Use kebab-case names (e.g., `user-auth`, `data-export`).
+        2. **New Capabilities**: List capabilities being introduced. Each becomes a sub-capability directory (if complex) or `specs/<name>/spec.md` (if simple). **Capability names MUST match the user's conversation language — if the user speaks Chinese, use Chinese (e.g., `前端骨架`, `主题体系`); if English, use English (e.g., `user-auth`, `data-export`). Never translate between languages.**
 
         3. **Modified Capabilities**: List existing capabilities whose REQUIREMENTS are changing. Only include if spec-level behavior changes. Each needs a delta spec file. Check `openspec/specs/` for existing spec names. Leave empty if no requirement changes.
       - **Impact**: Affected code, APIs, dependencies, or systems.
