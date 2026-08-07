@@ -470,10 +470,10 @@ export function getContinueChangeSkillTemplate(): SkillTemplate {
 
 **spec-driven schema** (proposal → specs → design → tasks):
 - **proposal.md**：如果不清楚，询问用户关于变更的信息。填写 Why, What Changes, Capabilities, Impact。
-  - Capabilities 部分至关重要 — 列出的每个 capability 都需要一个 spec 文件。
-  - **规模判定**：创建 proposal 后，读取 Capabilities 中的推进结论。
-    - **简单需求** → 四件套（specs/design/tasks）直接放在变更根目录。
-    - **复杂需求** → 先为每个子能力创建目录（capability name = 目录名），每个目录含 proposal.md + specs/ + design.md + tasks.md。根目录 proposal.md 为总览。
+  - Capabilities 就两个点：(1) 推进结论（简单/复杂）；(2) 能力清单。capability 名用用户对话语言，禁止翻译。
+  - **规模判定**：先数能力数，≥ 3 → 复杂需求，< 3 → 简单需求。必须执行，不可跳过。
+    - **简单需求** → 四件套放变更根目录。
+    - **复杂需求** → c1-xxx ~ cN-xxx 子能力目录，每个含独立四件套。
 
       \`\`\`
       changes/<name>/

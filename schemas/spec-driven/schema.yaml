@@ -12,33 +12,25 @@ artifacts:
       Sections:
       - **Why**: 1-2 sentences on the problem or opportunity. What problem does this solve? Why now?
       - **What Changes**: Bullet list of changes. Be specific about new capabilities, modifications, or removals. Mark breaking changes with **BREAKING**.
-      - **Capabilities**: This section serves double duty — it is BOTH the scale judgment AND the capability inventory.
+      - **Capabilities**: 两个内容，简洁清晰：
 
-        1. **规模判定（必填，放在 Capabilities 最前面）**：
+        1. **推进结论（必填，最前面）**：
 
-        ```
+        **判定规则（强制执行）：先数 New + Modified Capabilities 总数。≥ 3 → 复杂需求，< 3 → 简单需求。**
+
+        简单需求格式：
         > **推进结论：简单需求**
         >
-        > 四件套（proposal/specs/design/tasks）直接放在变更根目录。
+        > 四件套放变更根目录。
 
-        --- 或者 ---
-
+        复杂需求格式：
         > **推进结论：复杂需求**
         >
-        > 拆分为 N 个子能力，每个子能力独立四件套目录：
-        > - c1-<capability-name>
-        > - c2-<capability-name>
-        > - ...
-        >
-        > 根目录 proposal.md 为总览（Why + What Changes + 能力清单 + Impact）。
-        > 注意：目录名 = cN-<capability 原始名>，跟随用户语言习惯（英文 capability 则英文目录，中文则中文）。
-        ```
+        > 拆分为 N 个子能力：
+        > - c1-能力名
+        > - c2-能力名
 
-        New Capabilities + Modified Capabilities ≥ 3 → 复杂需求。
-
-        2. **New Capabilities**: List capabilities being introduced. Each becomes a sub-capability directory (if complex) or `specs/<name>/spec.md` (if simple). **Capability names MUST match the user's conversation language — if the user speaks Chinese, use Chinese (e.g., `前端骨架`, `主题体系`); if English, use English (e.g., `user-auth`, `data-export`). Never translate between languages.**
-
-        3. **Modified Capabilities**: List existing capabilities whose REQUIREMENTS are changing. Only include if spec-level behavior changes. Each needs a delta spec file. Check `openspec/specs/` for existing spec names. Leave empty if no requirement changes.
+        2. **能力说明**：推进结论中列出的每个能力，附带一句话概括（一行即可，不需要表格）。
       - **Impact**: Affected code, APIs, dependencies, or systems.
 
       IMPORTANT: Capabilities is the contract between proposal and specs phases.
