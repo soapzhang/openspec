@@ -266,22 +266,19 @@ export function generateInstructions(
   if (metadata?.size === 'large' && ['specs', 'design', 'tasks'].includes(artifactId)) {
     const capabilities = parseCapabilitiesFromProposal(context.changeDir);
     if (capabilities.length > 0) {
-      outputPath = `c1-${capabilities[0]}/${artifact.generates}`;
+      // Flat structure: each sub-capability dir has 3 files — spec.md, design.md, tasks.md
+      const fileName = artifactId === 'specs' ? 'spec.md' : artifact.generates;
+      outputPath = `c1-${capabilities[0]}/${fileName}`;
       const capList = capabilities
-        .map((c, i) => {
-          const dir = `c${i + 1}-${c}`;
-          return `  - ${dir}/${artifact.generates}`;
-        })
+        .map((c, i) => `  c${i + 1}-${c}/${fileName}`)
         .join('\n');
-      const capNames = capabilities.map((c, i) => `c${i + 1}-${c}`).join(', ');
       instruction = [
-        `**COMPLEX REQUIREMENT — sub-capability mode**`,
+        `**COMPLEX REQUIREMENT — 每个子能力目录只有 3 个文件：spec.md、design.md、tasks.md**`,
         ``,
-        `Create one per sub-capability directory (NOT at change root).`,
-        `Directory name format: c<N>-<capability-name>`,
+        `创建位置：`,
         capList,
         ``,
-        `Sub-capabilities: ${capNames}`,
+        `从 proposal.md → Capabilities → 推进结论 中逐字复制 cN- 目录名，禁止翻译。`,
         ``,
         artifact.instruction || '',
       ].join('\n');

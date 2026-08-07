@@ -473,23 +473,22 @@ export function getContinueChangeSkillTemplate(): SkillTemplate {
   - Capabilities 就两个点：(1) 推进结论（简单/复杂）；(2) 能力清单。capability 名用用户对话语言，禁止翻译。
   - **规模判定**：先数能力数，≥ 3 → 复杂需求，< 3 → 简单需求。必须执行，不可跳过。
     - **简单需求** → 四件套放变更根目录。
-    - **复杂需求** → c1-xxx ~ cN-xxx 子能力目录，每个含独立四件套。
+	    - **复杂需求** → c1-xxx ~ cN-xxx 子能力目录。每个目录只有 3 个文件：spec.md、design.md、tasks.md。根目录 proposal.md 为总览。
 
-      \`\`\`
-      changes/<name>/
-      ├── proposal.md           # 总览（本文件）
-      ├── c1-<capability-1>/    # 子能力独立四件套
-      │   ├── proposal.md
-      │   ├── specs/<capability>/spec.md
-      │   ├── design.md
-      │   └── tasks.md
-      ├── c2-<capability-2>/
-      │   └── ...
-      \`\`\`
-- **specs**：简单需求 → specs/\<capability\>/spec.md（变更根目录）；复杂需求 → cN-\<capability\>/specs/\<capability\>/spec.md（子能力目录，N 从 1 递增）。为每个 capability 创建一个 spec。
-- **design.md**：简单需求 → 变更根目录；复杂需求 → 每个子能力目录一份（cN-\<capability\>/design.md）。
-- **tasks.md**：简单需求 → 变更根目录；复杂需求 → 每个子能力目录一份（cN-\<capability\>/tasks.md）。
-- **目录名跟随用户语言习惯**：capability 是英文则英文目录，中文则中文目录，不强制翻译。
+	      \`\`\`
+	      changes/<name>/
+	      ├── proposal.md           # 总览（Why + 能力清单）
+	      ├── c1-<capability-1>/
+	      │   ├── spec.md
+	      │   ├── design.md
+	      │   └── tasks.md
+	      ├── c2-<capability-2>/
+	      │   └── ...
+	      \`\`\`
+- **specs**：简单需求 → specs/\<capability\>/spec.md（变更根目录）；复杂需求 → cN-\<capability\>/spec.md。
+- **design.md**：先读代码取证，再结合 specs 做设计。必须列出文件变更清单（新增/修改/删除，改什么），不可只讲架构。复杂需求 → cN-\<capability\>/design.md。
+- **tasks.md**：将实施分解为带复选框的任务。简单需求 → 变更根目录；复杂需求 → cN-\<capability\>/tasks.md。
+- **目录名规则**：cN- + capability 原文，禁止翻译。
 
 对于其他 Schema，遵循 CLI 输出中的 \`instruction\` 字段。
 
@@ -1244,25 +1243,21 @@ Here's the design:
 
 ---
 
-## Context
+## 代码现状分析
+[Current code state with file paths and line numbers]
 
-[Brief context about the current state]
+## 变更方案
+[Per-requirement implementation plan]
 
-## Goals / Non-Goals
+## 文件变更清单
+| 类型 | 文件路径 | 说明 |
+|------|---------|------|
+| 新增 | | |
+| 修改 | | |
+| 删除 | | |
 
-**Goals:**
-- [What we're trying to achieve]
-
-**Non-Goals:**
-- [What's explicitly out of scope]
-
-## Decisions
-
-### Decision 1: [Key decision]
-
-[Explanation of approach and rationale]
-
----
+## 决策记录
+[Key decisions with rationale]
 
 For a small task, this captures the key decisions without over-engineering.
 \`\`\`
@@ -2091,7 +2086,7 @@ Common artifact patterns:
 - **proposal.md**: Ask user about the change if not clear. Fill in Why, What Changes, Capabilities, Impact.
   - The Capabilities section is critical - each capability listed will need a spec file.
 - **specs/<capability>/spec.md**: Create one spec per capability listed in the proposal's Capabilities section (use the capability name, not the change name).
-- **design.md**: Document technical decisions, architecture, and implementation approach.
+- **design.md**: First read code for evidence, then design per specs. MUST include file change list (add/modify/delete with what changes), not just architecture.
 - **tasks.md**: Break down implementation into checkboxed tasks.
 
 For other schemas, follow the \`instruction\` field from the CLI output.

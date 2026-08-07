@@ -58,11 +58,11 @@ changes/f17085-登录重构/
 ├── proposal.md           # 提案（Why/What/Capabilities/Impact）
 ├── specs/                # delta 规范（ADDED/MODIFIED/REMOVED）
 │   └── <能力>/spec.md
-├── design.md             # 设计文档（技术决策）
+├── design.md             # 设计文档（代码现状分析 + 文件变更清单）
 └── tasks.md              # 任务清单（apply 逐项勾选跟踪）
 ```
 
-### 大型（复杂）需求（specs/design/tasks 下沉到子能力）
+### 大型（复杂）需求（spec/design/tasks 下沉到子能力）
 
 ```
 changes/f17085-平台重构/
@@ -70,17 +70,13 @@ changes/f17085-平台重构/
 ├── refine.md             # 完善环节产物（冻结）
 ├── release.md            # 上线文档（各子能力上线事项合并于此）
 ├── bugs/                 # bug 文档
-├── proposal.md           # 主 proposal（总览：动机 + 能力清单）
-├── c1-用户权限设计/       # 子能力 1：独立可交付单元
-│   ├── proposal.md
-│   ├── specs/
-│   │   └── <能力>/spec.md
+├── proposal.md           # 主 proposal（总览：动机 + 能力清单 + 推进结论）
+├── c1-用户权限设计/       # 子能力 1：3 个文件
+│   ├── spec.md
 │   ├── design.md
 │   └── tasks.md
 └── c2-消息推送/          # 子能力 2：同上
-    ├── proposal.md
-    ├── specs/
-    │   └── <能力>/spec.md
+    ├── spec.md
     ├── design.md
     └── tasks.md
 ```

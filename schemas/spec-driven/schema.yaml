@@ -30,6 +30,8 @@ artifacts:
         > - c1-能力名
         > - c2-能力名
 
+        > 每个子能力目录只有 3 个文件：spec.md、design.md、tasks.md。
+
         2. **能力说明**：推进结论中列出的每个能力，附带一句话概括（一行即可，不需要表格）。
       - **Impact**: Affected code, APIs, dependencies, or systems.
 
@@ -99,34 +101,31 @@ artifacts:
     description: Technical design document with implementation details
     template: design.md
     instruction: |
-      Create the design document that explains HOW to implement the change.
+      Create the design document that maps specs to complete technical implementation.
 
-      When to include design.md (create only if any apply):
-      - Cross-cutting change (multiple services/modules) or new architectural pattern
-      - New external dependency or significant data model changes
-      - Security, performance, or migration complexity
-      - Ambiguity that benefits from technical decisions before coding
+      **必须先做（不可跳过）**：
+      1. 阅读当前代码库，标注文件路径和行号
+      2. 结合 proposal / specs / refine.md，逐项分析差异
 
-      Sections:
-      - **Context**: Background, current state, constraints, stakeholders
-      - **Goals / Non-Goals**: What this design achieves and explicitly excludes
-      - **Decisions**: Key technical choices with rationale (why X over Y?). Include alternatives considered for each decision.
-      - **Risks / Trade-offs**: Known limitations, things that could go wrong. Format: [Risk] → Mitigation
-      - **Migration Plan**: Steps to deploy, rollback strategy (if applicable)
-      - **Open Questions**: Outstanding decisions or unknowns to resolve
+      **Sections（必填）**：
 
-      Focus on architecture and approach, not line-by-line implementation.
-      Reference the proposal for motivation and specs for requirements.
+      - **代码现状分析**：当前相关文件、类/函数签名、数据流、配置。从代码中取证，注明路径和行号。
+      - **逐 Requirement 实现方案**：每个 spec requirement 的技术方案（类/函数名、入参出参、逻辑流程、调用链）。
+      - **文件变更清单**（核心，必须逐文件列出）：
+        * 新增文件：路径 + 完整内容概要（类名、函数签名、关键逻辑）
+        * 修改文件：路径 + 当前代码（关键行） + 改成什么
+        * 删除文件：路径 + 原因
+      - **依赖与配置变更**：新增/修改的依赖（package.json/pom.xml）、环境变量、配置文件改动。
+      - **数据流与调用链**：请求/响应的完整链路（前端 → gateway → 后端 → DB），标注每个节点的变化。
+      - **决策记录**：关键技术选择 + 备选方案 + 选择理由。
+      - **风险与边界**：可能出错的地方、回滚方案、不影响的范围。
 
-      Good design docs explain the "why" behind technical decisions.
-
-      **Release constraint**: When this design involves go-live matters —
-      DDL/DML SQL, config changes, initialization actions, or released services
-      (frontend/backend) — they MUST be written into the change's `release.md`
-      (change root, same level as proposal/refine). Do not leave them only in
-      design docs; `opsc release` finalizes release.md after apply.
+      **约束**：
+      - 不抽象讨论，必须落实到具体文件名、函数签名、配置项。
+      - 上线事项（DDL/配置/初始化/发布服务）同步写入 release.md。
     requires:
       - proposal
+      - specs
 
   - id: tasks
     generates: tasks.md
