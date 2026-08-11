@@ -39,6 +39,17 @@ artifacts:
       Each capability listed needs a corresponding spec file. Research existing specs first.
 
       Keep it concise (1-2 pages). Focus on "why" not "how" — details go to design.md.
+
+      **复杂需求额外步骤**：在 proposal.md 最底部生成 `## 子能力进度` 表格，cN 行由推进结论决定，初始全 ⬜。
+      ```
+      ## 子能力进度
+
+      | 编号 | spec | design | tasks |
+      |------|------|--------|-------|
+      | c1 | ⬜ | ⬜ | ⬜ |
+      | c2 | ⬜ | ⬜ | ⬜ |
+      ```
+      spec/design/tasks 每完成一项，更新对应列 ✅。
     requires: []
 
   - id: specs
@@ -93,6 +104,8 @@ artifacts:
       ```
 
       Specs should be testable - each scenario is a potential test case.
+
+      **完成后**：更新 proposal.md 底部 `## 子能力进度` 表格，对应 cN 的 spec 列 ✅。
     requires:
       - proposal
 
@@ -123,6 +136,8 @@ artifacts:
       **约束**：
       - 不抽象讨论，必须落实到具体文件名、函数签名、配置项。
       - 上线事项（DDL/配置/初始化/发布服务）同步写入 release.md。
+
+      **完成后**：更新 proposal.md 底部 `## 子能力进度` 表格，对应 cN 的 design 列 ✅。
     requires:
       - proposal
       - specs
@@ -158,6 +173,8 @@ artifacts:
 
       Reference specs for what needs to be built, design for how to build it.
       Each task should be verifiable - you know when it's done.
+
+      **完成后**：更新 proposal.md 底部 `## 子能力进度` 表格，对应 cN 的 tasks 列 ✅。
     requires:
       - specs
       - design

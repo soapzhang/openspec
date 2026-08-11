@@ -13,8 +13,10 @@ import {
   loadChangeContext,
   generateInstructions,
   resolveSchema,
+  parseProgressTable,
   type ArtifactInstructions,
 } from '../../core/artifact-graph/index.js';
+import { readChangeMetadata } from '../../utils/change-metadata.js';
 import {
   validateChangeExists,
   validateSchemaExists,
@@ -350,6 +352,18 @@ export async function generateApplyInstructions(
     }
   }
 
+  // Large mode: check progress table for per-cN tasks completion
+  let hasIncompleteTasks = false;
+  if (missingArtifacts.length === 0) {
+    const metadata = readChangeMetadata(changeDir, projectRoot);
+    if (metadata?.size === 'large') {
+      const rows = parseProgressTable(changeDir);
+      if (rows && rows.length > 0 && !rows.every(r => r.tasks)) {
+        hasIncompleteTasks = true;
+      }
+    }
+  }
+
   // Build context files from all existing artifacts in schema
   const contextFiles: Record<string, string> = {};
   for (const artifact of schema.artifacts) {
@@ -382,6 +396,9 @@ export async function generateApplyInstructions(
   if (missingArtifacts.length > 0) {
     state = 'blocked';
     instruction = `Cannot apply this change yet. Missing artifacts: ${missingArtifacts.join(', ')}.\nUse the openspec-continue-change skill to create the missing artifacts first.`;
+  } else if (hasIncompleteTasks) {
+    state = 'blocked';
+    instruction = '子能力进度表中有 tasks 未完成（⬜）。请先运行 `opsc continue` 补齐所有子能力的 tasks.md，在 proposal.md 的表格中标记 ✅ 后再 apply。';
   } else if (tracksFile && !tracksFileExists) {
     // Tracking file configured but doesn't exist yet
     const tracksFilename = path.basename(tracksFile);

@@ -499,7 +499,11 @@ export function getContinueChangeSkillTemplate(): SkillTemplate {
 - 如果上下文不清楚，在创建之前询问用户
 - 在标记进度之前，验证写入后产物文件是否存在
 - 使用 Schema 的产物序列，不要假设特定的产物名称
-- **复杂需求**：创建 specs 前先建好所有子能力目录（含 proposal.md 草稿）
+- **复杂需求**：创建每个 cN 子能力目录后，更新 proposal.md 底部 \`## 子能力进度\` 表格。
+  - spec.md 创建 → spec 列 \✅
+  - design.md 创建 → design 列 \✅
+  - tasks.md 创建 → tasks 列 \✅
+  \`opsc status\` 会读取此表判断进度，不更新表格会导致重复生成。
 - **重要**：\`context\` 和 \`rules\` 是给你的约束，不是文件内容
   - 不要将 \`<context>\`, \`<rules>\`, \`<project_context>\` 块复制到产物中
   - 这些指导你写什么，但绝不应出现在输出中`,
@@ -553,7 +557,7 @@ export function getApplyChangeSkillTemplate(): SkillTemplate {
    - 基于当前状态的动态指令
 
    **处理状态：**
-   - 如果 \`state: "blocked"\`（缺少产物）：显示消息，建议使用 openspec-continue-change
+   - 如果 \`state: "blocked"\`：**STOP，拒绝实施。**显示缺失信息，告知用户必须先运行 \`opsc continue\` 补齐产物。禁止跳过、禁止提前写代码。
    - 如果 \`state: "all_done"\`：祝贺，建议归档
    - 否则：继续实施
 

@@ -3,7 +3,7 @@ import { createRequire } from 'module';
 import ora from 'ora';
 import path from 'path';
 import { promises as fs } from 'fs';
-import { AI_TOOLS } from '../core/config.js';
+import { AI_TOOLS, OPENSPEC_DIR_NAME } from '../core/config.js';
 import { UpdateCommand } from '../core/update.js';
 import { ListCommand } from '../core/list.js';
 import { ArchiveCommand } from '../core/archive.js';
@@ -621,7 +621,7 @@ program
 
       // Scale backfill: when entering specs without prior size judgment (legacy proposal)
       if (next === 'specs') {
-        const changeDir = path.join(projectRoot, 'openspec', 'changes', changeName);
+        const changeDir = path.join(projectRoot, OPENSPEC_DIR_NAME, 'changes', changeName);
         const { readChangeMetadata, writeChangeMetadata } = await import('../utils/change-metadata.js');
         const existing = readChangeMetadata(changeDir, projectRoot);
         if (!existing?.size) {

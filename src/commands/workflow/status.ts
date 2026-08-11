@@ -6,9 +6,11 @@
 
 import ora from 'ora';
 import chalk from 'chalk';
+import path from 'path';
 import {
   loadChangeContext,
   formatChangeStatus,
+  parseProgressTable,
   type ChangeStatus,
 } from '../../core/artifact-graph/index.js';
 import {
@@ -17,6 +19,8 @@ import {
   getStatusIndicator,
   getStatusColor,
 } from './shared.js';
+import { readChangeMetadata } from '../../utils/change-metadata.js';
+import { OPENSPEC_DIR_NAME } from '../../core/config.js';
 
 // -----------------------------------------------------------------------------
 // Types
@@ -50,9 +54,43 @@ export async function statusCommand(options: StatusOptions): Promise<void> {
 
     spinner.stop();
 
+    // JSON output
     if (options.json) {
+      // Large mode: inject progress table into JSON
+      const changeDir = path.join(projectRoot, OPENSPEC_DIR_NAME, 'changes', changeName);
+      const metadata = readChangeMetadata(changeDir, projectRoot);
+      if (metadata?.size === 'large') {
+        const rows = parseProgressTable(changeDir);
+        if (rows) {
+          const output = {
+            ...status,
+            scale: 'large',
+            progressTable: rows.map(r => ({
+              id: r.cN,
+              spec: r.spec,
+              design: r.design,
+              tasks: r.tasks,
+            })),
+          };
+          console.log(JSON.stringify(output, null, 2));
+          return;
+        }
+      }
       console.log(JSON.stringify(status, null, 2));
       return;
+    }
+
+    // Large mode: display progress table
+    const changeDir = path.join(projectRoot, OPENSPEC_DIR_NAME, 'changes', changeName);
+    const metadata = readChangeMetadata(changeDir, projectRoot);
+    if (metadata?.size === 'large') {
+      const rows = parseProgressTable(changeDir);
+      if (rows) {
+        console.log(`Change: ${changeName} (复杂需求)`);
+        console.log();
+        printProgressTable(rows);
+        return;
+      }
     }
 
     printStatusText(status);
@@ -86,5 +124,14 @@ export function printStatusText(status: ChangeStatus): void {
   if (status.isComplete) {
     console.log();
     console.log(chalk.green('All artifacts complete!'));
+  }
+}
+
+function printProgressTable(rows: { cN: string; spec: boolean; design: boolean; tasks: boolean }[]): void {
+  const check = (v: boolean) => v ? '✅' : '⬜';
+  console.log('| 编号 | spec | design | tasks |');
+  console.log('|------|------|--------|-------|');
+  for (const r of rows) {
+    console.log(`| ${r.cN} | ${check(r.spec)} | ${check(r.design)} | ${check(r.tasks)} |`);
   }
 }
