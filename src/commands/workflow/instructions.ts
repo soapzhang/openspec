@@ -8,6 +8,7 @@
 import ora from 'ora';
 import path from 'path';
 import * as fs from 'fs';
+import fg from 'fast-glob';
 import { OPENSPEC_DIR_NAME } from '../../core/config.js';
 import {
   loadChangeContext,
@@ -259,61 +260,14 @@ function parseTasksFile(content: string): TaskItem[] {
 
 /**
  * Checks if an artifact output exists in the change directory.
- * Supports glob patterns (e.g., "specs/*.md") by verifying at least one matching file exists.
+ * Supports glob patterns via fast-glob (e.g. specs glob, cN-* patterns).
  */
 function artifactOutputExists(changeDir: string, generates: string): boolean {
-  // Normalize the generates path to use platform-specific separators
-  const normalizedGenerates = generates.split('/').join(path.sep);
-  const fullPath = path.join(changeDir, normalizedGenerates);
+  const fullPath = path.join(changeDir, generates);
 
-  // If it's a glob pattern (contains ** or *), check for matching files
-  if (generates.includes('*')) {
-    // Extract the directory part before the glob pattern
-    const parts = normalizedGenerates.split(path.sep);
-    const dirParts: string[] = [];
-    let patternPart = '';
-    for (const part of parts) {
-      if (part.includes('*')) {
-        patternPart = part;
-        break;
-      }
-      dirParts.push(part);
-    }
-    const dirPath = path.join(changeDir, ...dirParts);
-
-    // Check if directory exists
-    if (!fs.existsSync(dirPath) || !fs.statSync(dirPath).isDirectory()) {
-      return false;
-    }
-
-    // Extract expected extension from pattern (e.g., "*.md" -> ".md")
-    const extMatch = patternPart.match(/\*(\.[a-zA-Z0-9]+)$/);
-    const expectedExt = extMatch ? extMatch[1] : null;
-
-    // Recursively check for matching files
-    const hasMatchingFiles = (dir: string): boolean => {
-      try {
-        const entries = fs.readdirSync(dir, { withFileTypes: true });
-        for (const entry of entries) {
-          if (entry.isDirectory()) {
-            // For ** patterns, recurse into subdirectories
-            if (generates.includes('**') && hasMatchingFiles(path.join(dir, entry.name))) {
-              return true;
-            }
-          } else if (entry.isFile()) {
-            // Check if file matches expected extension (or any file if no extension specified)
-            if (!expectedExt || entry.name.endsWith(expectedExt)) {
-              return true;
-            }
-          }
-        }
-      } catch {
-        return false;
-      }
-      return false;
-    };
-
-    return hasMatchingFiles(dirPath);
+  if (generates.includes('*') || generates.includes('?')) {
+    const normalizedPattern = fullPath.replace(/\\/g, '/');
+    return fg.sync(normalizedPattern, { onlyFiles: true }).length > 0;
   }
 
   return fs.existsSync(fullPath);
@@ -345,9 +299,20 @@ export async function generateApplyInstructions(
 
   // Check which required artifacts are missing
   const missingArtifacts: string[] = [];
+  const metadata = readChangeMetadata(changeDir, projectRoot);
+  const isLarge = metadata?.size === 'large';
+  const largeModeGenerates: Record<string, string> = {
+    'specs/**/*.md': 'c[0-9]-*/spec.md',
+    'design.md': 'c[0-9]-*/design.md',
+    'tasks.md': 'c[0-9]-*/tasks.md',
+  };
   for (const artifactId of requiredArtifactIds) {
     const artifact = schema.artifacts.find((a) => a.id === artifactId);
-    if (artifact && !artifactOutputExists(changeDir, artifact.generates)) {
+    if (!artifact) continue;
+    const generates = isLarge
+      ? (largeModeGenerates[artifact.generates] ?? artifact.generates)
+      : artifact.generates;
+    if (!artifactOutputExists(changeDir, generates)) {
       missingArtifacts.push(artifactId);
     }
   }
@@ -355,8 +320,7 @@ export async function generateApplyInstructions(
   // Large mode: check progress table for per-cN tasks completion
   let hasIncompleteTasks = false;
   if (missingArtifacts.length === 0) {
-    const metadata = readChangeMetadata(changeDir, projectRoot);
-    if (metadata?.size === 'large') {
+    if (isLarge) {
       const rows = parseProgressTable(changeDir);
       if (rows && rows.length > 0 && !rows.every(r => r.tasks)) {
         hasIncompleteTasks = true;

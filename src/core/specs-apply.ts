@@ -16,6 +16,7 @@ import {
 } from './parsers/requirement-blocks.js';
 import { Validator } from './validation/validator.js';
 import { OPENSPEC_DIR_NAME } from './config.js';
+import { readChangeMetadata } from '../utils/change-metadata.js';
 
 // -----------------------------------------------------------------------------
 // Types
@@ -56,6 +57,44 @@ export interface SpecsApplyOutput {
  */
 export async function findSpecUpdates(changeDir: string, mainSpecsDir: string): Promise<SpecUpdate[]> {
   const updates: SpecUpdate[] = [];
+
+  // Large mode: sub-capability dirs live at change root (cN-<capability>/spec.md)
+  const projectRoot = path.resolve(changeDir, '../../..');
+  const metadata = readChangeMetadata(changeDir, projectRoot);
+  if (metadata?.size === 'large') {
+    try {
+      const entries = await fs.readdir(changeDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
+        const match = entry.name.match(/^c\d+-(.+)$/);
+        if (!match) continue;
+
+        const capability = match[1];
+        const specFile = path.join(changeDir, entry.name, 'spec.md');
+        const targetFile = path.join(mainSpecsDir, capability, 'spec.md');
+
+        try {
+          await fs.access(specFile);
+        } catch {
+          continue;
+        }
+
+        let exists = false;
+        try {
+          await fs.access(targetFile);
+          exists = true;
+        } catch {
+          exists = false;
+        }
+
+        updates.push({ source: specFile, target: targetFile, exists });
+      }
+    } catch {
+      // No change directory entries
+    }
+    return updates;
+  }
+
   const changeSpecsDir = path.join(changeDir, 'specs');
 
   try {
