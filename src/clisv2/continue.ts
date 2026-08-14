@@ -1,5 +1,5 @@
 import path from 'path';
-import { validateChangeExists } from './lib/shared.js';
+import { validateChangeExists, ensureChangeSize } from './lib/shared.js';
 import { readChangeMetadata } from './lib/utils/change-metadata.js';
 import { instructionsCommand } from './lib/instructions.js';
 import { OPENSPEC_DIR_NAME } from './lib/config.js';
@@ -42,6 +42,17 @@ export async function continueCommand(options: ContinueOptions): Promise<void> {
   const artifactId = NEXT_ARTIFACT[stage];
   if (!artifactId) {
     throw new Error(`未知阶段 '${stage}'`);
+  }
+
+  // Size judgment: determine large/small before generating proposal
+  if (stage === 'refine') {
+    const size = await ensureChangeSize(projectRoot, changeName);
+    if (size === 'large') {
+      console.log('规模判定：复杂需求。将拆分子能力目录 c1-<描述>/、c2-<描述>/…（各含 spec/design/tasks）。');
+    } else if (size === 'small') {
+      console.log('规模判定：简单需求。四件套（proposal/specs/design/tasks）直接放变更根目录。');
+    }
+    console.log();
   }
 
   await instructionsCommand(artifactId, { change: changeName });

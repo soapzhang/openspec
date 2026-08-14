@@ -214,10 +214,10 @@ export async function ensureChangeSize(
 		return size;
 	}
 
-	const { select, confirm } = await import('@inquirer/prompts');
+	const { confirm } = await import('@inquirer/prompts');
 	const confirmed = await confirm({
-		message: '根据完善信息，此变更规模如何？(large 将拆分子能力 c1-<描述>/c2-<描述>…)',
-		default: false,
+		message: '此变更是复杂需求吗？（是=拆分子能力 c1-<描述>/c2-<描述>…，否=简单需求四件套放根目录）',
+		default: true,
 	});
 	const size: 'large' | 'small' = confirmed ? 'large' : 'small';
 

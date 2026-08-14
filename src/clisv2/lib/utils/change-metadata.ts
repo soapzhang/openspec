@@ -10,6 +10,8 @@ const METADATA_FILENAME = '.openspec.yaml';
 const METADATA_TEMPLATE_PATH = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '..',
+  '..',
+  '..',
   'template',
   'change-meta.yaml'
 );
@@ -64,11 +66,7 @@ export function writeChangeMetadata(
 ): void {
   const metaPath = path.join(changeDir, METADATA_FILENAME);
 
-  // Apply defaults: size defaults to 'large' (complex requirement)
-  const normalized: ChangeMetadata = {
-    ...metadata,
-    size: metadata.size ?? 'large',
-  };
+  const normalized: ChangeMetadata = { ...metadata };
 
   // Validate schema exists
   validateSchemaName(normalized.schema, projectRoot);
@@ -90,7 +88,7 @@ export function writeChangeMetadata(
     .replace('{size}', parseResult.data.size ?? '')
     .replace('{status}', parseResult.data.status ?? '')
     .split('\n')
-    .filter((line) => !line.trim().endsWith(': '))
+    .filter((line) => !line.trim().endsWith(':'))
     .join('\n') + '\n';
 
   try {

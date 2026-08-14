@@ -26,8 +26,8 @@ export class SchemaLoadError extends Error {
  */
 export function getPackageSchemasDir(): string {
   const currentFile = fileURLToPath(import.meta.url);
-  // Navigate from dist/core/artifact-graph/ to package root's schemas/
-  return path.join(path.dirname(currentFile), '..', '..', '..', 'schemas');
+  // Navigate from dist/clisv2/lib/artifact-graph/ to package root's schemas/
+  return path.join(path.dirname(currentFile), '..', '..', '..', '..', 'schemas');
 }
 
 /**

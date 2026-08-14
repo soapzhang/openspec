@@ -148,7 +148,7 @@ opsc explore                # 探索模式（非强制）</code></pre>
 </div>
 <div class="card">
   <h3><code>opsc new [name]</code> — 新建变更</h3>
-  <p>命名 <code>f&lt;ID&gt;-&lt;描述&gt;</code>（如 <code>f17085-登录重构</code>）。不带名字交互引导（ID 缺省用当前日期兜底）。自动生成 <code>.openspec.yaml</code>（status: new, size: large）、<code>bugs/</code>、<code>release.md</code> 草稿。</p>
+  <p>命名 <code>f&lt;ID&gt;-&lt;描述&gt;</code>（如 <code>f17085-登录重构</code>）。不带名字交互引导（ID 缺省用当前日期兜底）。自动生成 <code>.openspec.yaml</code>（status: new）、<code>bugs/</code>、<code>release.md</code> 草稿。</p>
 </div>
 <div class="card">
   <h3><code>opsc refine</code> — 完善环节（强制）</h3>
@@ -157,6 +157,7 @@ opsc explore                # 探索模式（非强制）</code></pre>
 <div class="card">
   <h3><code>opsc continue</code> — 推进产物</h3>
   <p>按当前阶段输出下一产物的创建指令（含任务说明、依赖文件、写入位置、指导语、模板）。<b>只读不改 status</b>。</p>
+  <p><b>规模判定</b>：<code>refine</code> 阶段首次 continue 时判定——交互问「复杂需求？」（默认是），非交互从 refine.md 功能细节条目数自动判定（≥3 条=large）。large 拆子能力 <code>c1-*/c2-*/</code>，small 四件套放变更根目录。</p>
 </div>
 <div class="card">
   <h3><code>opsc apply</code> — 实施</h3>
@@ -281,13 +282,14 @@ opsc continue --change f17085-登录重构</code></pre>
   </table>
 </div>
 
-<h3>场景四：复杂需求（子能力拆分）</h3>
+<h3>场景四：简单需求 vs 复杂需求</h3>
 <div class="card">
-  <p>变更默认按 <b>large（复杂需求）</b> 处理，proposal 里拆分子能力 <code>c1-xxx</code>、<code>c2-xxx</code>：</p>
+  <p><b>规模在 <code>refine</code> 完成后的首次 <code>continue</code> 时判定</b>：</p>
   <ul>
-    <li><code>spec</code>/<code>design</code>/<code>task</code>：所有子能力<b>统一完成</b>后 <code>status --set</code></li>
-    <li><code>apply</code>：按子能力 <b>1by1</b> 实施，全部完成后 <code>status --set cN-apply</code></li>
+    <li><b>简单需求（small）</b>：proposal/specs/design/tasks 四件套直接放变更根目录，阶段照常走 <code>spec → design → task</code></li>
+    <li><b>复杂需求（large）</b>：proposal 里拆分子能力 <code>c1-xxx</code>、<code>c2-xxx</code>，spec/design/tasks 下沉到各子能力目录</li>
   </ul>
+  <p>两种规模下阶段流转一致：<code>spec</code>/<code>design</code>/<code>task</code> 统一完成后 <code>status --set</code> 推进；<code>apply</code> 阶段复杂需求按子能力 1by1 实施。</p>
 </div>
 
 <h3>场景五：实施与上线</h3>

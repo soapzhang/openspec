@@ -12,7 +12,7 @@
 | status | 输出 |
 |--------|------|
 | new | 提示先 `opsc refine` |
-| refine | proposal 创建指令 |
+| refine | **先判定规模**，再输出 proposal 指令 |
 | proposal | specs 创建指令 |
 | spec | design 创建指令 |
 | design | tasks 创建指令 |
@@ -20,6 +20,12 @@
 | cN-apply | 提示 `opsc release` |
 
 3. 复用 `instructionsCommand` 输出产物指令（XML：task/dependencies/output/instruction/template）
+
+### 规模判定（status=refine 时）
+
+- 交互：问「复杂需求？」默认是（large）；否则 small
+- 非交互：从 `refine.md` 功能细节条目数自动判定（≥3 条 → large）
+- large → 拆子能力 `c1-*/c2-*/`；small → 四件套放变更根目录
 
 ## 用法
 

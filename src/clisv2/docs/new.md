@@ -12,7 +12,7 @@
    - 没传且非交互：报错
 2. 校验名称（kebab-case 或 `f<ID>-<描述>` 格式）
 3. 调用 `createChange` 创建目录，含 `bugs/` 子目录、`release.md` 草稿
-4. 写 `.openspec.yaml` 元数据：`schema`、`created`、`size: large`（默认复杂需求）、`status: new`
+4. 写 `.openspec.yaml` 元数据：`schema`、`created`、`status: new`（`size` 暂不写，refine 后由 continue 判定）
 5. 可选 `--schema` 指定工作流（默认 `spec-driven`，读 config.yaml）
 
 ## 用法
@@ -26,7 +26,7 @@ opsc new --schema my-workflow f17085-登录重构
 ## 输出
 
 - 变更目录：`openspec++/changes/<name>/`
-- 元数据：`.openspec.yaml`（`size` 默认 `large`，`status: new`）
+- 元数据：`.openspec.yaml`（`status: new`，`size` 由后续 refine/continue 判定）
 - 下一步：运行 `opsc refine` 进入强制完善环节
 
 ## 相关文件
