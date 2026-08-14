@@ -1,69 +1,10 @@
 import { Command } from 'commander';
 import { createRequire } from 'module';
 import ora from 'ora';
-import path from 'path';
-import { promises as fs } from 'fs';
-import { AI_TOOLS, OPENSPEC_DIR_NAME } from '../core/config.js';
-import { UpdateCommand } from '../core/update.js';
-import { ListCommand } from '../core/list.js';
-import { ArchiveCommand } from '../core/archive.js';
-import { ViewCommand } from '../core/view.js';
-import { registerSpecCommand } from '../commands/spec.js';
-import { ChangeCommand } from '../commands/change.js';
-import { ValidateCommand } from '../commands/validate.js';
-import { ShowCommand } from '../commands/show.js';
-import { CompletionCommand } from '../commands/completion.js';
-import { FeedbackCommand } from '../commands/feedback.js';
-import { registerConfigCommand } from '../commands/config.js';
-import { registerSchemaCommand } from '../commands/schema.js';
-import {
-  statusCommand,
-  instructionsCommand,
-  applyInstructionsCommand,
-  templatesCommand,
-  schemasCommand,
-  newChangeCommand,
-  refineCommand,
-  releaseCommand,
-  bugCommand,
-  DEFAULT_SCHEMA,
-  type StatusOptions,
-  type InstructionsOptions,
-  type TemplatesOptions,
-  type SchemasOptions,
-  type NewChangeOptions,
-  type RefineOptions,
-  type ReleaseOptions,
-  type BugOptions,
-  validateChangeExists,
-  ensureChangeSize,
-  detectScaleFromProposal,
-} from '../commands/workflow/index.js';
-import { maybeShowTelemetryNotice, trackCommand, shutdown } from '../telemetry/index.js';
 
 const program = new Command();
 const require = createRequire(import.meta.url);
 const { version } = require('../../package.json');
-
-/**
- * Get the full command path for nested commands.
- * For example: 'change show' -> 'change:show'
- */
-function getCommandPath(command: Command): string {
-  const names: string[] = [];
-  let current: Command | null = command;
-
-  while (current) {
-    const name = current.name();
-    // Skip the root 'opsc' command
-    if (name && name !== 'opsc') {
-      names.unshift(name);
-    }
-    current = current.parent;
-  }
-
-  return names.join(':') || 'openspec';
-}
 
 program
   .name('opsc')
@@ -73,202 +14,25 @@ program
 // Global options
 program.option('--no-color', '禁用彩色输出');
 
-// Apply global flags and telemetry before any command runs
-// Note: preAction receives (thisCommand, actionCommand) where:
-// - thisCommand: the command where hook was added (root program)
-// - actionCommand: the command actually being executed (subcommand)
-program.hook('preAction', async (thisCommand, actionCommand) => {
+// Apply --no-color before any command runs
+program.hook('preAction', async (thisCommand) => {
   const opts = thisCommand.opts();
   if (opts.color === false) {
     process.env.NO_COLOR = '1';
   }
-
-  // Show first-run telemetry notice (if not seen)
-  await maybeShowTelemetryNotice();
-
-  // Track command execution (use actionCommand to get the actual subcommand)
-  const commandPath = getCommandPath(actionCommand);
-  await trackCommand(commandPath, version);
 });
-
-// Shutdown telemetry after command completes
-program.hook('postAction', async () => {
-  await shutdown();
-});
-
-const availableToolIds = AI_TOOLS.filter((tool) => tool.skillsDir).map((tool) => tool.value);
-const toolsOptionDescription = `非交互式配置 AI 工具。使用 "all"、"none" 或逗号分隔的列表：${availableToolIds.join(', ')}`;
 
 program
   .command('init [path]')
-  .description('在当前项目中初始化 OpenSpec')
-  .option('--tools <tools>', toolsOptionDescription)
-  .option('--force', '不提示直接清理旧文件')
-  .action(async (targetPath = '.', options?: { tools?: string; force?: boolean }) => {
+  .description('在当前项目中初始化 OpenSpec（Claude Code）')
+  .action(async (targetPath = '.') => {
     try {
-      // Validate that the path is a valid directory
-      const resolvedPath = path.resolve(targetPath);
-
-      try {
-        const stats = await fs.stat(resolvedPath);
-        if (!stats.isDirectory()) {
-          throw new Error(`Path "${targetPath}" is not a directory`);
-        }
-      } catch (error: any) {
-        if (error.code === 'ENOENT') {
-          // Directory doesn't exist, but we can create it
-          console.log(`Directory "${targetPath}" doesn't exist, it will be created.`);
-        } else if (error.message && error.message.includes('not a directory')) {
-          throw error;
-        } else {
-          throw new Error(`Cannot access path "${targetPath}": ${error.message}`);
-        }
-      }
-
-      const { InitCommand } = await import('../core/init.js');
-      const initCommand = new InitCommand({
-        tools: options?.tools,
-        force: options?.force,
-      });
-      await initCommand.execute(targetPath);
-    } catch (error) {
-      console.log(); // Empty line for spacing
-      ora().fail(`Error: ${(error as Error).message}`);
-      process.exit(1);
-    }
-  });
-
-// Hidden alias: 'experimental' -> 'init' for backwards compatibility
-program
-  .command('experimental', { hidden: true })
-  .description('init 的别名（已弃用）')
-  .option('--tool <tool-id>', '目标 AI 工具（映射到 --tools）')
-  .option('--no-interactive', '禁用交互式提示')
-  .action(async (options?: { tool?: string; noInteractive?: boolean }) => {
-    try {
-      console.log('注意: "openspec experimental" 已弃用。请使用 "openspec init"。');
-      const { InitCommand } = await import('../core/init.js');
-      const initCommand = new InitCommand({
-        tools: options?.tool,
-        interactive: options?.noInteractive === true ? false : undefined,
-      });
-      await initCommand.execute('.');
+      const { initCommand } = await import('../clisv2/init.js');
+      await initCommand(targetPath);
     } catch (error) {
       console.log();
       ora().fail(`Error: ${(error as Error).message}`);
       process.exit(1);
-    }
-  });
-
-program
-  .command('update [path]', { hidden: true })
-  .description('更新 OpenSpec 指令文件')
-  .option('--force', '即使工具已最新也强制更新')
-  .action(async (targetPath = '.', options?: { force?: boolean }) => {
-    try {
-      const resolvedPath = path.resolve(targetPath);
-      const updateCommand = new UpdateCommand({ force: options?.force });
-      await updateCommand.execute(resolvedPath);
-    } catch (error) {
-      console.log(); // Empty line for spacing
-      ora().fail(`Error: ${(error as Error).message}`);
-      process.exit(1);
-    }
-  });
-
-program
-  .command('list', { hidden: true })
-  .description('列出项目（默认列出变更）。使用 --specs 列出规范。')
-  .option('--specs', '列出规范而不是变更')
-  .option('--changes', '显式列出变更（默认）')
-  .option('--sort <order>', '排序方式："recent"（默认）或 "name"', 'recent')
-  .option('--json', '输出 JSON（供程序使用）')
-  .action(async (options?: { specs?: boolean; changes?: boolean; sort?: string; json?: boolean }) => {
-    try {
-      const listCommand = new ListCommand();
-      const mode: 'changes' | 'specs' = options?.specs ? 'specs' : 'changes';
-      const sort = options?.sort === 'name' ? 'name' : 'recent';
-      await listCommand.execute('.', mode, { sort, json: options?.json });
-    } catch (error) {
-      console.log(); // Empty line for spacing
-      ora().fail(`Error: ${(error as Error).message}`);
-      process.exit(1);
-    }
-  });
-
-program
-  .command('view', { hidden: true })
-  .description('显示规范和变更的交互式仪表盘')
-  .action(async () => {
-    try {
-      const viewCommand = new ViewCommand();
-      await viewCommand.execute('.');
-    } catch (error) {
-      console.log(); // Empty line for spacing
-      ora().fail(`Error: ${(error as Error).message}`);
-      process.exit(1);
-    }
-  });
-
-// Change command with subcommands
-const changeCmd = program
-  .command('change', { hidden: true })
-  .description('管理 OpenSpec 变更提案');
-
-// Deprecation notice for noun-based commands
-changeCmd.hook('preAction', () => {
-  console.error('警告: "openspec change ..." 命令已弃用。请优先使用动词开头的命令（如 "openspec list", "openspec validate --changes"）。');
-});
-
-changeCmd
-  .command('show [change-name]')
-  .description('以 JSON 或 Markdown 格式显示变更提案')
-  .option('--json', '输出 JSON')
-  .option('--deltas-only', '仅显示增量（仅 JSON）')
-  .option('--requirements-only', 'deltas-only 的别名（已弃用）')
-  .option('--no-interactive', '禁用交互式提示')
-  .action(async (changeName?: string, options?: { json?: boolean; requirementsOnly?: boolean; deltasOnly?: boolean; noInteractive?: boolean }) => {
-    try {
-      const changeCommand = new ChangeCommand();
-      await changeCommand.show(changeName, options);
-    } catch (error) {
-      console.error(`Error: ${(error as Error).message}`);
-      process.exitCode = 1;
-    }
-  });
-
-changeCmd
-  .command('list')
-  .description('列出所有活跃变更（已弃用：请使用 "openspec list"）')
-  .option('--json', '输出 JSON')
-  .option('--long', '显示 ID 和标题以及计数')
-  .action(async (options?: { json?: boolean; long?: boolean }) => {
-    try {
-      console.error('警告: "openspec change list" 已弃用。请使用 "openspec list"。');
-      const changeCommand = new ChangeCommand();
-      await changeCommand.list(options);
-    } catch (error) {
-      console.error(`Error: ${(error as Error).message}`);
-      process.exitCode = 1;
-    }
-  });
-
-changeCmd
-  .command('validate [change-name]')
-  .description('验证变更提案')
-  .option('--strict', '启用严格验证模式')
-  .option('--json', '输出 JSON 格式的验证报告')
-  .option('--no-interactive', '禁用交互式提示')
-  .action(async (changeName?: string, options?: { strict?: boolean; json?: boolean; noInteractive?: boolean }) => {
-    try {
-      const changeCommand = new ChangeCommand();
-      await changeCommand.validate(changeName, options);
-      if (typeof process.exitCode === 'number' && process.exitCode !== 0) {
-        process.exit(process.exitCode);
-      }
-    } catch (error) {
-      console.error(`Error: ${(error as Error).message}`);
-      process.exitCode = 1;
     }
   });
 
@@ -280,215 +44,25 @@ program
   .option('--no-validate', '跳过验证（不推荐，需要确认）')
   .action(async (changeName?: string, options?: { yes?: boolean; skipSpecs?: boolean; noValidate?: boolean; validate?: boolean }) => {
     try {
-      const archiveCommand = new ArchiveCommand();
-      await archiveCommand.execute(changeName, options);
-    } catch (error) {
-      console.log(); // Empty line for spacing
-      ora().fail(`Error: ${(error as Error).message}`);
-      process.exit(1);
-    }
-  });
-
-registerSpecCommand(program);
-registerConfigCommand(program);
-registerSchemaCommand(program);
-
-// Top-level validate command
-program
-  .command('validate [item-name]', { hidden: true })
-  .description('验证变更和规范')
-  .option('--all', '验证所有变更和规范')
-  .option('--changes', '验证所有变更')
-  .option('--specs', '验证所有规范')
-  .option('--type <type>', '在模棱两可时指定项目类型：change|spec')
-  .option('--strict', '启用严格验证模式')
-  .option('--json', '输出 JSON 格式的验证结果')
-  .option('--concurrency <n>', '最大并发验证数（默认为 env OPENSPEC_CONCURRENCY 或 6）')
-  .option('--no-interactive', '禁用交互式提示')
-  .action(async (itemName?: string, options?: { all?: boolean; changes?: boolean; specs?: boolean; type?: string; strict?: boolean; json?: boolean; noInteractive?: boolean; concurrency?: string }) => {
-    try {
-      const validateCommand = new ValidateCommand();
-      await validateCommand.execute(itemName, options);
+      const { archiveCommand } = await import('../clisv2/archive.js');
+      await archiveCommand(changeName, options);
     } catch (error) {
       console.log();
       ora().fail(`Error: ${(error as Error).message}`);
       process.exit(1);
     }
   });
-
-// Top-level show command
-program
-  .command('show [item-name]', { hidden: true })
-  .description('显示变更或规范')
-  .option('--json', '输出 JSON')
-  .option('--type <type>', '在模棱两可时指定项目类型：change|spec')
-  .option('--no-interactive', '禁用交互式提示')
-  // change-only flags
-  .option('--deltas-only', '仅显示增量（仅 JSON，变更）')
-  .option('--requirements-only', 'deltas-only 的别名（已弃用，变更）')
-  // spec-only flags
-  .option('--requirements', '仅 JSON：仅显示需求（排除场景）')
-  .option('--no-scenarios', '仅 JSON：排除场景内容')
-  .option('-r, --requirement <id>', '仅 JSON：通过 ID 显示特定需求（从 1 开始）')
-  // allow unknown options to pass-through to underlying command implementation
-  .allowUnknownOption(true)
-  .action(async (itemName?: string, options?: { json?: boolean; type?: string; noInteractive?: boolean; [k: string]: any }) => {
-    try {
-      const showCommand = new ShowCommand();
-      await showCommand.execute(itemName, options ?? {});
-    } catch (error) {
-      console.log();
-      ora().fail(`Error: ${(error as Error).message}`);
-      process.exit(1);
-    }
-  });
-
-// Feedback command
-program
-  .command('feedback <message>', { hidden: true })
-  .description('提交关于 OpenSpec 的反馈')
-  .option('--body <text>', '反馈的详细描述')
-  .action(async (message: string, options?: { body?: string }) => {
-    try {
-      const feedbackCommand = new FeedbackCommand();
-      await feedbackCommand.execute(message, options);
-    } catch (error) {
-      console.log();
-      ora().fail(`Error: ${(error as Error).message}`);
-      process.exit(1);
-    }
-  });
-
-// Completion command with subcommands
-const completionCmd = program
-  .command('completion', { hidden: true })
-  .description('管理 OpenSpec CLI 的 Shell 补全');
-
-completionCmd
-  .command('generate [shell]')
-  .description('生成 Shell 补全脚本（输出到 stdout）')
-  .action(async (shell?: string) => {
-    try {
-      const completionCommand = new CompletionCommand();
-      await completionCommand.generate({ shell });
-    } catch (error) {
-      console.log();
-      ora().fail(`Error: ${(error as Error).message}`);
-      process.exit(1);
-    }
-  });
-
-completionCmd
-  .command('install [shell]')
-  .description('安装 Shell 补全脚本')
-  .option('--verbose', '显示详细安装输出')
-  .action(async (shell?: string, options?: { verbose?: boolean }) => {
-    try {
-      const completionCommand = new CompletionCommand();
-      await completionCommand.install({ shell, verbose: options?.verbose });
-    } catch (error) {
-      console.log();
-      ora().fail(`Error: ${(error as Error).message}`);
-      process.exit(1);
-    }
-  });
-
-completionCmd
-  .command('uninstall [shell]')
-  .description('卸载 Shell 补全脚本')
-  .option('-y, --yes', '跳过确认提示')
-  .action(async (shell?: string, options?: { yes?: boolean }) => {
-    try {
-      const completionCommand = new CompletionCommand();
-      await completionCommand.uninstall({ shell, yes: options?.yes });
-    } catch (error) {
-      console.log();
-      ora().fail(`Error: ${(error as Error).message}`);
-      process.exit(1);
-    }
-  });
-
-// Hidden command for machine-readable completion data
-program
-  .command('__complete <type>', { hidden: true })
-  .description('以机器可读格式输出补全数据（内部使用）')
-  .action(async (type: string) => {
-    try {
-      const completionCommand = new CompletionCommand();
-      await completionCommand.complete({ type });
-    } catch (error) {
-      // Silently fail for graceful shell completion experience
-      process.exitCode = 1;
-    }
-  });
-
-// ═══════════════════════════════════════════════════════════
-// Workflow Commands (formerly experimental)
-// ═══════════════════════════════════════════════════════════
 
 // Status command
 program
-  .command('status', { hidden: true })
-  .description('显示变更的产物完成状态')
-  .option('--change <id>', '要显示状态的变更名称')
-  .option('--schema <name>', 'Schema 覆盖（从 config.yaml 自动检测）')
-  .option('--json', '输出 JSON')
-  .action(async (options: StatusOptions) => {
+  .command('status')
+  .description('显示或设置变更的阶段状态')
+  .option('--change <id>', '要显示的变更名称')
+  .option('--set <stage>', '设置阶段（new/refine/proposal/spec/design/task/cN-apply）')
+  .action(async (options: { change?: string; set?: string }) => {
     try {
+      const { statusCommand } = await import('../clisv2/status.js');
       await statusCommand(options);
-    } catch (error) {
-      console.log();
-      ora().fail(`Error: ${(error as Error).message}`);
-      process.exit(1);
-    }
-  });
-
-// Instructions command
-program
-  .command('instructions [artifact]', { hidden: true })
-  .description('输出创建产物或应用任务的丰富指令')
-  .option('--change <id>', '变更名称')
-  .option('--schema <name>', 'Schema 覆盖（从 config.yaml 自动检测）')
-  .option('--json', '输出 JSON')
-  .action(async (artifactId: string | undefined, options: InstructionsOptions) => {
-    try {
-      // Special case: "apply" is not an artifact, but a command to get apply instructions
-      if (artifactId === 'apply') {
-        await applyInstructionsCommand(options);
-      } else {
-        await instructionsCommand(artifactId, options);
-      }
-    } catch (error) {
-      console.log();
-      ora().fail(`Error: ${(error as Error).message}`);
-      process.exit(1);
-    }
-  });
-
-// Templates command
-program
-  .command('templates', { hidden: true })
-  .description('显示 Schema 中所有产物的解析模板路径')
-  .option('--schema <name>', `使用的 Schema（默认：${DEFAULT_SCHEMA}）`)
-  .option('--json', '输出将产物 ID 映射到模板路径的 JSON')
-  .action(async (options: TemplatesOptions) => {
-    try {
-      await templatesCommand(options);
-    } catch (error) {
-      console.log();
-      ora().fail(`Error: ${(error as Error).message}`);
-      process.exit(1);
-    }
-  });
-
-// Schemas command
-program
-  .command('schemas', { hidden: true })
-  .description('列出可用的工作流 Schema 及其描述')
-  .option('--json', '输出 JSON（供 agent 使用）')
-  .action(async (options: SchemasOptions) => {
-    try {
-      await schemasCommand(options);
     } catch (error) {
       console.log();
       ora().fail(`Error: ${(error as Error).message}`);
@@ -503,11 +77,12 @@ const newCmd = program
 
 newCmd
   .option('--description <text>', '添加到 README.md 的描述（kebab-case 名称时）')
-  .option('--schema <name>', `使用的工作流 Schema（默认：${DEFAULT_SCHEMA}）`);
+  .option('--schema <name>', '使用的工作流 Schema（默认：spec-driven）');
 
-newCmd.action(async (name: string | undefined, options: NewChangeOptions) => {
+newCmd.action(async (name: string | undefined, options: { description?: string; schema?: string }) => {
   try {
-    await newChangeCommand(name, options);
+    const { newCommand } = await import('../clisv2/new.js');
+    await newCommand(name, options);
   } catch (error) {
     console.log();
     ora().fail(`Error: ${(error as Error).message}`);
@@ -519,10 +94,11 @@ newCmd
   .command('change <name>')
   .description('创建一个新的变更目录')
   .option('--description <text>', '添加到 README.md 的描述')
-  .option('--schema <name>', `使用的工作流 Schema（默认：${DEFAULT_SCHEMA}）`)
-  .action(async (name: string, options: NewChangeOptions) => {
+  .option('--schema <name>', '使用的工作流 Schema（默认：spec-driven）')
+  .action(async (name: string, options: { description?: string; schema?: string }) => {
     try {
-      await newChangeCommand(name, options);
+      const { newCommand } = await import('../clisv2/new.js');
+      await newCommand(name, options);
     } catch (error) {
       console.log();
       ora().fail(`Error: ${(error as Error).message}`);
@@ -530,13 +106,13 @@ newCmd
     }
   });
 
-// Refine command: mandatory refinement phase before spec
 program
   .command('refine')
   .description('启动完善环节，生成 refine.md（spec 之前强制）')
   .option('--change <id>', '变更名称')
-  .action(async (options: RefineOptions) => {
+  .action(async (options: { change?: string }) => {
     try {
+      const { refineCommand } = await import('../clisv2/refine.js');
       await refineCommand(options);
     } catch (error) {
       console.log();
@@ -545,13 +121,44 @@ program
     }
   });
 
-// Release command: finalize release.md after apply
+program
+  .command('continue')
+  .description('按当前阶段输出下一个产物的创建指令')
+  .option('--change <id>', '变更名称')
+  .action(async (options: { change?: string }) => {
+    try {
+      const { continueCommand } = await import('../clisv2/continue.js');
+      await continueCommand(options);
+    } catch (error) {
+      console.log();
+      ora().fail(`Error: ${(error as Error).message}`);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('apply')
+  .description('显示实施任务的指令')
+  .option('--change <id>', '变更名称')
+  .option('--json', '输出 JSON')
+  .action(async (options: { change?: string; json?: boolean }) => {
+    try {
+      const { applyCommand } = await import('../clisv2/apply.js');
+      await applyCommand(options);
+    } catch (error) {
+      console.log();
+      ora().fail(`Error: ${(error as Error).message}`);
+      process.exit(1);
+    }
+  });
+
 program
   .command('release')
   .description('完善上线文档 release.md 并置为定稿（必须 apply 完成后运行）')
   .option('--change <id>', '变更名称')
-  .action(async (options: ReleaseOptions) => {
+  .action(async (options: { change?: string }) => {
     try {
+      const { releaseCommand } = await import('../clisv2/release.js');
       await releaseCommand(options);
     } catch (error) {
       console.log();
@@ -560,7 +167,6 @@ program
     }
   });
 
-// Bug command: create bug document in change's bugs/ directory
 program
   .command('bug')
   .description('在当前变更的 bugs/ 目录创建 bug 文档')
@@ -569,8 +175,9 @@ program
   .option('--description <text>', '描述')
   .option('--reason <text>', '原因')
   .option('--fix <text>', '修改方案')
-  .action(async (options: BugOptions) => {
+  .action(async (options: { change?: string; status?: string; description?: string; reason?: string; fix?: string }) => {
     try {
+      const { bugCommand } = await import('../clisv2/bug.js');
       await bugCommand(options);
     } catch (error) {
       console.log();
@@ -579,94 +186,12 @@ program
     }
   });
 
-// Continue command: show status + next artifact instructions
-program
-  .command('continue')
-  .description('显示当前状态与下一个待创建产物的指令')
-  .option('--change <id>', '变更名称')
-  .option('--schema <name>', 'Schema 覆盖（从 config.yaml 自动检测）')
-  .action(async (options: StatusOptions) => {
-    try {
-      await statusCommand(options);
-      console.log();
-
-      const projectRoot = process.cwd();
-      const changeName = await validateChangeExists(options.change, projectRoot);
-      const { loadChangeContext } = await import('../core/artifact-graph/index.js');
-      const context = loadChangeContext(projectRoot, changeName, options.schema);
-      const nextIds = context.graph.getNextArtifacts(context.completed);
-      const next = nextIds[0];
-
-      if (!next) {
-        if (context.graph.getAllArtifacts().length === context.completed.size) {
-          console.log('所有工件已完成！可运行 `opsc apply` 实施或 `opsc archive` 归档。');
-        } else {
-          console.log('当前没有可创建的工件（前置依赖未满足）。请检查上方状态。');
-        }
-        return;
-      }
-
-      // Scale judgment: after refine, before proposal (user-forced confirmation)
-      if (next === 'proposal') {
-        const size = await ensureChangeSize(projectRoot, changeName);
-        if (size === 'large') {
-          console.log(
-            '规模判定：大型需求。将拆分子能力目录 c1-<描述>/、c2-<描述>/…（各含 proposal/spec/design/tasks），根目录仅保留主 proposal 与 refine.md。'
-          );
-        } else if (size === 'small') {
-          console.log('规模判定：简单需求。四件套（proposal/spec/design/tasks）将直接放在变更根目录。');
-        }
-        console.log();
-      }
-
-      // Scale backfill: when entering specs without prior size judgment (legacy proposal)
-      if (next === 'specs') {
-        const changeDir = path.join(projectRoot, OPENSPEC_DIR_NAME, 'changes', changeName);
-        const { readChangeMetadata, writeChangeMetadata } = await import('../utils/change-metadata.js');
-        const existing = readChangeMetadata(changeDir, projectRoot);
-        if (!existing?.size) {
-          const size = detectScaleFromProposal(changeDir) ?? 'small';
-          writeChangeMetadata(changeDir, { ...(existing ?? { schema: 'spec-driven' }), size }, projectRoot);
-          if (size === 'large') {
-            console.log('检测到大型需求（proposal Capabilities ≥ 3）。将拆分子能力目录 c1-<描述>/、c2-<描述>/…');
-            console.log();
-          }
-        }
-      }
-
-      await instructionsCommand(next, options);
-    } catch (error) {
-      console.log();
-      ora().fail(`Error: ${(error as Error).message}`);
-      process.exit(1);
-    }
-  });
-
-// Apply command: show apply instructions for task implementation
-program
-  .command('apply')
-  .description('显示实施任务的指令')
-  .option('--change <id>', '变更名称')
-  .option('--schema <name>', 'Schema 覆盖（从 config.yaml 自动检测）')
-  .option('--json', '输出 JSON')
-  .action(async (options: InstructionsOptions) => {
-    try {
-      await applyInstructionsCommand(options);
-    } catch (error) {
-      console.log();
-      ora().fail(`Error: ${(error as Error).message}`);
-      process.exit(1);
-    }
-  });
-
-// Explore command: output exploration guidance
 program
   .command('explore')
   .description('进入探索模式：思考与澄清需求（非强制，随时可用）')
-  .action(() => {
-    console.log('探索模式：思考先行。');
-    console.log('可阅读代码、搜索调查，但不实施功能。');
-    console.log('准备好后运行 `opsc new` 开始变更，或 `opsc refine` 进入完善环节。');
+  .action(async () => {
+    const { exploreCommand } = await import('../clisv2/explore.js');
+    exploreCommand();
   });
 
 program.parse();

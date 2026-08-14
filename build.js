@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'child_process';
-import { existsSync, rmSync } from 'fs';
+import { existsSync, rmSync, cpSync } from 'fs';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
@@ -24,6 +24,13 @@ console.log('Compiling TypeScript...');
 try {
   runTsc(['--version']);
   runTsc();
+
+  // Copy skill template assets into dist
+  if (existsSync('src/template')) {
+    console.log('Copying template assets...');
+    cpSync('src/template', 'dist/template', { recursive: true });
+  }
+
   console.log('\n✅ Build completed successfully!');
 } catch (error) {
   console.error('\n❌ Build failed!');

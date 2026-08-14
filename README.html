@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenSpec Plus（opsc）— 使用指南</title>
+<style>
+  :root {
+    --bg: #0f1117; --card: #1a1d27; --border: #2a2e3d;
+    --text: #e6e8ee; --muted: #8b91a5; --accent: #5b8cff;
+    --green: #3fb96f; --yellow: #d9a13c; --red: #e05c5c;
+    --purple: #9d7bff; --code-bg: #12141c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.7; padding-bottom: 80px;
+    font-size: 19px;
+  }
+  .container { max-width: 1125px; margin: 0 auto; padding: 0 24px; }
+  header {
+    padding: 60px 24px 40px; text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(91,140,255,0.08), transparent);
+  }
+  header h1 { font-size: 38px; margin-bottom: 8px; }
+  header .sub { color: var(--muted); font-size: 18px; }
+  h2 { font-size: 26px; margin: 48px 0 20px; padding-left: 12px; border-left: 4px solid var(--accent); }
+  h3 { font-size: 20px; margin: 28px 0 12px; color: #cdd3e6; }
+  p { margin: 10px 0; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 16px 0; }
+  .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 16px 0; }
+  .flow .step {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 14px; font-family: Consolas, monospace; font-size: 16px; white-space: nowrap;
+  }
+  .flow .step.key { border-color: var(--accent); color: var(--accent); }
+  .flow .arrow { color: var(--muted); }
+  code {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px;
+    padding: 2px 7px; font-family: Consolas, monospace; font-size: 16px; color: #a8d1ff;
+  }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 20px; overflow-x: auto; margin: 12px 0;
+    font-family: Consolas, monospace; font-size: 16px; line-height: 1.6;
+  }
+  pre code { background: none; border: none; padding: 0; color: #c9d4f0; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 17px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; background: rgba(255,255,255,0.02); }
+  .tag { display: inline-block; border-radius: 4px; padding: 1px 8px; font-size: 14px; font-weight: 500; margin-right: 4px; }
+  .tag.new { background: rgba(91,140,255,0.15); color: var(--accent); }
+  .tag.refine { background: rgba(157,123,255,0.15); color: var(--purple); }
+  .tag.proposal { background: rgba(217,161,60,0.15); color: var(--yellow); }
+  .tag.spec, .tag.design, .tag.task { background: rgba(63,185,111,0.15); color: var(--green); }
+  .tag.apply { background: rgba(224,92,92,0.15); color: var(--red); }
+  .callout { border-radius: 8px; padding: 14px 18px; margin: 16px 0; font-size: 17px; }
+  .callout.info { background: rgba(91,140,255,0.08); border: 1px solid rgba(91,140,255,0.3); }
+  .callout.warn { background: rgba(217,161,60,0.08); border: 1px solid rgba(217,161,60,0.3); }
+  .callout.tip { background: rgba(63,185,111,0.08); border: 1px solid rgba(63,185,111,0.3); }
+  ul { margin: 10px 0 10px 22px; } li { margin: 6px 0; }
+  .muted { color: var(--muted); }
+  .cmd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+  .cmd-box { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; }
+  .cmd-box .name { font-family: Consolas, monospace; color: var(--accent); font-weight: 600; }
+  .cmd-box .desc { font-size: 16px; color: var(--muted); margin-top: 6px; }
+  nav.toc {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px 24px; margin: 24px 0;
+  }
+  nav.toc a { color: var(--accent); text-decoration: none; }
+  nav.toc li { margin: 4px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>OpenSpec Plus（opsc）</h1>
+  <div class="sub">AI 原生规范驱动开发系统 · v6.0.0 · 适配 Claude Code</div>
+</header>
+
+<div class="container">
+
+<nav class="toc">
+  <strong>目录</strong>
+  <ul>
+    <li><a href="#intro">一、简介与安装</a></li>
+    <li><a href="#quickstart">二、快速开始</a></li>
+    <li><a href="#commands">三、命令总览</a></li>
+    <li><a href="#stages">四、阶段流转</a></li>
+    <li><a href="#structure">五、目录结构</a></li>
+    <li><a href="#scenarios">六、使用场景</a></li>
+    <li><a href="#claude">七、Claude Code 集成</a></li>
+    <li><a href="#dev">八、开发本工具</a></li>
+  </ul>
+</nav>
+
+<h2 id="intro">一、简介与安装</h2>
+<p>OpenSpec Plus（<code>opsc</code>）是 AI 原生规范驱动开发系统，通过「先完善、再规划、后实施、可上线」的流程管理软件变更。</p>
+
+<h3>环境要求</h3>
+<table>
+  <tr><th>依赖</th><th>要求</th></tr>
+  <tr><td>Node.js</td><td>≥ 20.19.0（ESM 模块）</td></tr>
+  <tr><td>包管理器</td><td>pnpm</td></tr>
+  <tr><td>平台</td><td>macOS / Linux / Windows</td></tr>
+</table>
+
+<h3>安装</h3>
+<pre><code>git clone https://github.com/soapzhang/openspec.git
+cd openspec
+pnpm install
+pnpm build              # 编译 TypeScript → dist/
+npm install -g .        # 全局安装，生成 opsc 命令
+opsc --version          # 验证，输出 6.0.0</code></pre>
+<p class="muted">开发调试可用 <code>pnpm link</code> 软链本地包；旧版本残留报错时先 <code>npm rm -g openspec opsc</code>。</p>
+
+<h2 id="quickstart">二、快速开始</h2>
+<pre><code>opsc init                   # 初始化项目（安装 9 个 Agent Skill 到 .claude/skills/）
+opsc new f17085-登录重构     # 新建变更（跟踪 ID 格式）
+opsc refine                 # 完善环节（spec 前强制，产出 refine.md）
+opsc continue               # 输出下一个产物指令（proposal/spec/design/tasks）
+opsc apply                  # 实施任务
+opsc release                # 完善上线文档 release.md 并定稿（apply 后）
+opsc archive                # 归档变更
+opsc bug                    # 创建 bug 文档
+opsc explore                # 探索模式（非强制）</code></pre>
+
+<h2 id="commands">三、命令总览</h2>
+<div class="cmd-grid">
+  <div class="cmd-box"><div class="name">opsc init [path]</div><div class="desc">初始化项目，安装 9 个 Agent Skill 到 <code>.claude/skills/</code></div></div>
+  <div class="cmd-box"><div class="name">opsc new [name]</div><div class="desc">创建变更目录，命名 <code>f&lt;ID&gt;-&lt;描述&gt;</code></div></div>
+  <div class="cmd-box"><div class="name">opsc refine</div><div class="desc">强制完善环节，生成 <code>refine.md</code></div></div>
+  <div class="cmd-box"><div class="name">opsc status</div><div class="desc">查看/设置变更阶段（<code>--set</code>）</div></div>
+  <div class="cmd-box"><div class="name">opsc continue</div><div class="desc">按当前阶段输出下一产物指令</div></div>
+  <div class="cmd-box"><div class="name">opsc apply</div><div class="desc">输出实施任务指令</div></div>
+  <div class="cmd-box"><div class="name">opsc release</div><div class="desc">完善并定稿 <code>release.md</code></div></div>
+  <div class="cmd-box"><div class="name">opsc bug</div><div class="desc">在 <code>bugs/</code> 目录创建 bug 文档</div></div>
+  <div class="cmd-box"><div class="name">opsc explore</div><div class="desc">探索模式：思考与澄清需求</div></div>
+  <div class="cmd-box"><div class="name">opsc archive</div><div class="desc">归档变更，合并 specs 到主目录</div></div>
+</div>
+
+<h3>各命令详解</h3>
+<div class="card">
+  <h3><code>opsc init</code> — 初始化</h3>
+  <p>创建目录结构 <code>openspec++/specs|changes|archive</code>，复制 9 个 skill 到 <code>.claude/skills/</code>，写 <code>config.yaml</code>。幂等，重复运行不覆盖已有配置。</p>
+</div>
+<div class="card">
+  <h3><code>opsc new [name]</code> — 新建变更</h3>
+  <p>命名 <code>f&lt;ID&gt;-&lt;描述&gt;</code>（如 <code>f17085-登录重构</code>）。不带名字交互引导（ID 缺省用当前日期兜底）。自动生成 <code>.openspec.yaml</code>（status: new, size: large）、<code>bugs/</code>、<code>release.md</code> 草稿。</p>
+</div>
+<div class="card">
+  <h3><code>opsc refine</code> — 完善环节（强制）</h3>
+  <p>spec 前必须完成，产出 <code>refine.md</code>。所有判断基于代码决策，完成后冻结（后续变更走 proposal/spec，不反向修改）。更新 status → <code>refine</code>。</p>
+</div>
+<div class="card">
+  <h3><code>opsc continue</code> — 推进产物</h3>
+  <p>按当前阶段输出下一产物的创建指令（含任务说明、依赖文件、写入位置、指导语、模板）。<b>只读不改 status</b>。</p>
+</div>
+<div class="card">
+  <h3><code>opsc apply</code> — 实施</h3>
+  <p>门槛：status 必须是 <code>task</code>。输出实施指令，按 <code>tasks.md</code> 逐项勾选完成。</p>
+</div>
+<div class="card">
+  <h3><code>opsc release</code> — 上线定稿</h3>
+  <p>门槛：status 必须是 <code>cN-apply</code>。校验 tasks 全勾完，逐节确认上线事项（DDL/DML/配置/初始化/发布服务）后置定稿。</p>
+</div>
+<div class="card">
+  <h3><code>opsc archive</code> — 归档</h3>
+  <p>校验 → 合并 specs 到主目录 → 移入 <code>archive/&lt;日期&gt;-&lt;name&gt;/</code>。<code>--skip-specs</code> 跳过合并，<code>-y</code> 跳过确认。</p>
+</div>
+<div class="card">
+  <h3><code>opsc bug</code> — 记录 bug</h3>
+  <p>在 <code>bugs/b&lt;编号&gt;-&lt;描述&gt;.md</code> 建档，编号自动递增。原因（根因分析）必填，确认后才允许改代码。</p>
+</div>
+
+<h2 id="stages">四、阶段流转</h2>
+<p>每个变更的 <code>.openspec.yaml</code> 记录一个 <code>status</code> 阶段，决定下一步做什么。</p>
+
+<div class="flow">
+  <span class="step key">new</span><span class="arrow">→</span>
+  <span class="step key">refine</span><span class="arrow">→</span>
+  <span class="step key">proposal</span><span class="arrow">→</span>
+  <span class="step">spec</span><span class="arrow">→</span>
+  <span class="step">design</span><span class="arrow">→</span>
+  <span class="step">task</span><span class="arrow">→</span>
+  <span class="step">cN-apply</span>
+</div>
+
+<table>
+  <tr><th>阶段</th><th>含义</th><th>下一步</th></tr>
+  <tr><td><span class="tag new">new</span></td><td>变更已创建</td><td><code>opsc refine</code></td></tr>
+  <tr><td><span class="tag refine">refine</span></td><td>完善完成</td><td><code>opsc continue</code>（proposal）</td></tr>
+  <tr><td><span class="tag proposal">proposal</span></td><td>提案完成</td><td><code>opsc continue</code>（specs）</td></tr>
+  <tr><td><span class="tag spec">spec</span></td><td>规格完成（全子能力）</td><td><code>opsc continue</code>（design）</td></tr>
+  <tr><td><span class="tag design">design</span></td><td>设计完成</td><td><code>opsc continue</code>（tasks）</td></tr>
+  <tr><td><span class="tag task">task</span></td><td>任务清单完成</td><td><code>opsc apply</code></td></tr>
+  <tr><td><span class="tag apply">cN-apply</span></td><td>实施完成</td><td><code>opsc release</code></td></tr>
+</table>
+
+<div class="callout info">
+  <strong>阶段语义：</strong><code>spec</code>/<code>design</code>/<code>task</code> 是所有子能力（cN）<b>统一完成</b>，不带 cN 前缀；<code>cN-apply</code> 是实施阶段，<b>按子能力 1by1 推进</b>。简单需求（无拆分）同样适用。
+</div>
+
+<h2 id="structure">五、目录结构</h2>
+<h3>简单需求（四件套在变更根目录）</h3>
+<pre><code>openspec++/changes/f17085-登录重构/
+├── .openspec.yaml     # 元数据（schema / size / status）
+├── refine.md          # 完善环节产物（冻结）
+├── release.md         # 上线文档（new 草稿，release 定稿）
+├── bugs/              # bug 文档
+├── proposal.md        # 提案
+├── specs/             # delta 规范
+│   └── &lt;能力&gt;/spec.md
+├── design.md          # 设计文档
+└── tasks.md           # 任务清单</code></pre>
+
+<h3>复杂需求（spec/design/tasks 下沉到子能力）</h3>
+<pre><code>openspec++/changes/f17085-平台重构/
+├── .openspec.yaml
+├── refine.md
+├── release.md
+├── bugs/
+├── proposal.md        # 主提案（含「子能力进度」表格）
+├── c1-用户权限设计/
+│   ├── spec.md  design.md  tasks.md
+└── c2-消息推送/
+    ├── spec.md  design.md  tasks.md</code></pre>
+
+<h3>归档</h3>
+<p>变更整体移入 <code>changes/archive/YYYY-MM-DD-&lt;name&gt;/</code>，<code>release.md</code> 原样保留为上线记录。</p>
+
+<h2 id="scenarios">六、使用场景</h2>
+
+<h3>场景一：全新项目起步</h3>
+<div class="card">
+<pre><code>opsc init my-project
+cd my-project
+opsc new f17085-登录重构
+opsc refine --change f17085-登录重构</code></pre>
+</div>
+
+<h3>场景二：推进产物（核心循环）</h3>
+<div class="card">
+<pre><code>opsc continue --change f17085-登录重构   # 输出 proposal 指令
+# ...AI 写 proposal.md...
+opsc status --change f17085-登录重构 --set proposal
+opsc continue                           # 输出 specs 指令
+# ...AI 写 specs...
+opsc status --set spec
+opsc continue                           # design
+opsc status --set design
+opsc continue                           # tasks
+opsc status --set task</code></pre>
+<div class="callout tip"><strong>约定：</strong><code>continue</code> 只读不改；产物写完后用 <code>status --set</code> 手动推进，显式确认"写完了"。</div>
+</div>
+
+<h3>场景三：切换 Agent 会话后恢复（重点）</h3>
+<div class="card">
+  <p>切换/重启 Claude Code 会话后上下文全部丢失，恢复只需两条命令：</p>
+<pre><code># 1. 看当前卡在哪个阶段
+opsc status --change f17085-登录重构
+#   Change: f17085-登录重构
+#   阶段: design
+#   下一步: opsc continue（生成 tasks）
+
+# 2. 直接 continue，拿到下一产物指令
+opsc continue --change f17085-登录重构</code></pre>
+  <p><code>continue</code> 输出完整上下文：任务说明、依赖文件路径、写入位置、instruction、模板结构。AI 照着写即可，无需回忆之前的对话。</p>
+  <div class="callout warn"><strong>为什么能恢复：</strong>所有进度落盘在变更目录文件 + <code>.openspec.yaml</code> 的 status。会话没了，状态还在。</div>
+  <table>
+    <tr><th>status 显示</th><th>恢复动作</th></tr>
+    <tr><td><code>new</code></td><td><code>opsc refine</code></td></tr>
+    <tr><td><code>refine</code></td><td><code>opsc continue</code> → proposal</td></tr>
+    <tr><td><code>proposal</code></td><td><code>opsc continue</code> → specs</td></tr>
+    <tr><td><code>spec</code></td><td><code>opsc continue</code> → design</td></tr>
+    <tr><td><code>design</code></td><td><code>opsc continue</code> → tasks</td></tr>
+    <tr><td><code>task</code></td><td><code>opsc apply</code></td></tr>
+    <tr><td><code>cN-apply</code></td><td><code>opsc release</code></td></tr>
+  </table>
+</div>
+
+<h3>场景四：复杂需求（子能力拆分）</h3>
+<div class="card">
+  <p>变更默认按 <b>large（复杂需求）</b> 处理，proposal 里拆分子能力 <code>c1-xxx</code>、<code>c2-xxx</code>：</p>
+  <ul>
+    <li><code>spec</code>/<code>design</code>/<code>task</code>：所有子能力<b>统一完成</b>后 <code>status --set</code></li>
+    <li><code>apply</code>：按子能力 <b>1by1</b> 实施，全部完成后 <code>status --set cN-apply</code></li>
+  </ul>
+</div>
+
+<h3>场景五：实施与上线</h3>
+<div class="card">
+<pre><code>opsc apply --change f17085-登录重构    # 输出实施指令（task 阶段）
+# ...AI 实施，勾选 tasks.md...
+opsc status --set cN-apply
+opsc release --change f17085-登录重构  # 完善上线文档并定稿</code></pre>
+</div>
+
+<h3>场景六：归档</h3>
+<div class="card">
+<pre><code>opsc archive f17085-登录重构
+opsc archive f17085-登录重构 -y
+opsc archive --skip-specs   # 纯文档变更</code></pre>
+</div>
+
+<h2 id="claude">七、Claude Code 集成</h2>
+<div class="card">
+  <ol>
+    <li><code>opsc init</code> → 9 个 Agent Skill 写入 <code>.claude/skills/</code>（opsc-new / opsc-refine / opsc-release / opsc-continue / opsc-apply / opsc-archive / opsc-explore / opsc-bug / opsc-grill）</li>
+    <li>重启 IDE 后，Skill 按用户意图自动触发（如"新建一个变更"触发 opsc-new，skill 内部调用 <code>opsc new</code>）</li>
+    <li>变更目录、<code>refine.md</code>、<code>release.md</code>、<code>bugs/</code> 均可在 IDE 中直接查看与编辑</li>
+  </ol>
+</div>
+
+<h2 id="dev">八、开发本工具</h2>
+<div class="card">
+<pre><code>pnpm install
+pnpm build
+node bin/opsc.js --help    # 未全局安装时用 node 直接运行</code></pre>
+<ul>
+  <li>语言：TypeScript（严格模式）、ESM、Node.js ≥ 20.19.0</li>
+  <li>CLI 框架：Commander.js；交互：@inquirer/prompts</li>
+  <li>命令实现：<code>src/clisv2/</code>（根目录只放命令，共享逻辑在 <code>lib/</code>，模板在 <code>src/template/</code>）</li>
+</ul>
+</div>
+
+</div>
+</body>
+</html>

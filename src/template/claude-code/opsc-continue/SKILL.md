@@ -1,0 +1,81 @@
+---
+name: opsc-continue
+description: 通过创建下一个产物继续处�?OpenSpec 变更。当用户想要推进他们的变更、创建下一个产物或继续他们的工作流时使用�?license: MIT
+compatibility: Requires openspec CLI.
+metadata:
+  author: openspec
+  version: "1.0"
+  generatedBy: "6.0.0"
+---
+
+通过创建下一个产物继续处理变更�?
+**输入**：可选择指定变更名称。如果省略，检查是否可以从对话上下文中推断。如果模糊或不明确，必须提示可用的变更�?
+**步骤**
+
+1. **如果没有提供变更名称，提示选择**
+
+   运行 `opsc list --json` 以获取按最近修改排序的可用变更。然后使�?**AskUserQuestion 工具** 让用户选择要处理哪个变更�?
+   提供�?3-4 个最近修改的变更作为选项，显示：
+   - 变更名称
+   - Schema（如果有 `schema` 字段，否则为 "spec-driven"�?   - 状态（例如�?0/5 tasks", "complete", "no tasks"�?   - 最近修改时间（来自 `lastModified` 字段�?
+   将最近修改的变更标记�?"(Recommended)"，因为这很可能是用户想要继续的�?
+   **重要**：不要猜测或自动选择变更。始终让用户选择�?
+2. **检查当前状�?*
+   ```bash
+   opsc status --change "<name>" --json
+   ```
+   解析 JSON 以了解当前状态。响应包括：
+   - `schemaName`：正在使用的工作�?Schema（例如，"spec-driven"�?   - `artifacts`：产物数组及其状态（"done", "ready", "blocked"�?   - `isComplete`：指示是否所有产物都已完成的布尔�?
+3. **根据状态行�?*�?
+   ---
+
+   **如果所有产物都已完�?(`isComplete: true`)**�?   - 祝贺用户
+   - 显示最终状态，包括使用�?Schema
+   - 建议�?所有产物已创建！你现在可以实施此变更或将其归档�?
+   - 停止
+
+   ---
+
+   **如果有产物准备创�?*（状态显示有 `status: "ready"` 的产物）�?   - 从状态输出中选择第一�?`status: "ready"` 的产�?   - 获取其指令：
+     ```bash
+     opsc instructions <artifact-id> --change "<name>" --json
+     ```
+   - 解析 JSON。关键字段是�?     - `context`：项目背景（给你的约�?- 不要包含在输出中�?     - `rules`：产物特定规则（给你的约�?- 不要包含在输出中�?     - `template`：用于输出文件的结构
+     - `instruction`：Schema 特定的指�?     - `outputPath`：写入产物的位置
+     - `dependencies`：已完成的产物，用于阅读上下�?   - **创建产物文件**�?     - 阅读任何已完成的依赖文件以获取上下文
+     - 使用 `template` 作为结构 - 填充其部�?     - 应用 `context` �?`rules` 作为约束 - 但不要将它们复制到文件中
+     - 写入指令中指定的输出路径
+   - 显示已创建的内容以及现在解锁的内�?   - 在创建一个产物后停止
+
+   ---
+
+   **如果没有产物准备好（全部阻塞�?*�?   - 这在有效 Schema 中不应发�?   - 显示状态并建议检查问�?
+4. **创建产物后，显示进度**
+   ```bash
+   opsc status --change "<name>"
+   ```
+
+**输出**
+
+每次调用后，显示�?- 创建了哪个产�?- 正在使用�?Schema 工作�?- 当前进度（N/M 完成�?- 现在解锁了哪些产�?- 提示�?想要继续吗？只需让我继续或告诉我下一步做什么�?
+
+**产物创建指南**
+
+产物类型及其用途取决于 Schema。使用指令输出中�?`instruction` 字段来了解要创建什么�?
+常见产物模式�?
+**spec-driven schema** (proposal �?specs �?design �?tasks):
+- **proposal.md**：如果不清楚，询问用户关于变更的信息。填�?Why, What Changes, Capabilities, Impact�?  - Capabilities 就两个点�?1) 推进结论（简�?复杂）；(2) 能力清单。capability 名用用户对话语言，禁止翻译�?  - **规模判定**：先数能力数，≥ 3 �?复杂需求，< 3 �?简单需求。必须执行，不可跳过�?    - **简单需�?* �?四件套放变更根目录�?	    - **复杂需�?* �?c1-xxx ~ cN-xxx 子能力目录。每个目录只�?3 个文件：spec.md、design.md、tasks.md。根目录 proposal.md 为总览�?
+	      ```
+	      changes/<name>/
+	      ├── proposal.md           # 总览（Why + 能力清单�?	      ├── c1-<capability-1>/
+	      �?  ├── spec.md
+	      �?  ├── design.md
+	      �?  └── tasks.md
+	      ├── c2-<capability-2>/
+	      �?  └── ...
+	      ```
+- **specs**：简单需�?�?specs/<capability>/spec.md（变更根目录）；复杂需�?�?cN-<capability>/spec.md�?- **design.md**：先读代码取证，再结�?specs 做设计。必须列出文件变更清单（新增/修改/删除，改什么），不可只讲架构。复杂需�?�?cN-<capability>/design.md�?- **tasks.md**：将实施分解为带复选框的任务。简单需�?�?变更根目录；复杂需�?�?cN-<capability>/tasks.md�?- **目录名规�?*：cN- + capability 原文，禁止翻译�?
+对于其他 Schema，遵�?CLI 输出中的 `instruction` 字段�?
+**护栏**
+- 每次调用创建一个产�?- 在创建新产物之前，始终阅读依赖产�?- 绝不跳过产物或乱序创�?- 如果上下文不清楚，在创建之前询问用户
+- 在标记进度之前，验证写入后产物文件是否存�?- 使用 Schema 的产物序列，不要假设特定的产物名�?- **复杂需�?*：创建每�?cN 子能力目录后，更�?proposal.md 底部 `## 子能力进度` 表格�?  - spec.md 创建 �?spec �?�?  - design.md 创建 �?design �?�?  - tasks.md 创建 �?tasks �?�?  `opsc status` 会读取此表判断进度，不更新表格会导致重复生成�?- **重要**：`context` �?`rules` 是给你的约束，不是文件内�?  - 不要�?`<context>`, `<rules>`, `<project_context>` 块复制到产物�?  - 这些指导你写什么，但绝不应出现在输出中

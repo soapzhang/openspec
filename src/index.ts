@@ -1,2 +1,1 @@
-export * from './cli/index.js';
-export * from './core/index.js';
+export * from './clisv2/lib/index.js';
