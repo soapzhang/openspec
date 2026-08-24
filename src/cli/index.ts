@@ -70,6 +70,22 @@ program
     }
   });
 
+// List command
+program
+  .command('list')
+  .description('列出当前项目中的所有变更（按最近修改排序）')
+  .option('--json', '输出 JSON')
+  .action(async (options: { json?: boolean }) => {
+    try {
+      const { listCommand } = await import('../clisv2/list.js');
+      await listCommand(options);
+    } catch (error) {
+      console.log();
+      ora().fail(`Error: ${(error as Error).message}`);
+      process.exit(1);
+    }
+  });
+
 // New command group with change subcommand
 const newCmd = program
   .command('new [name]')

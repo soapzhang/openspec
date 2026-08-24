@@ -7,52 +7,6 @@ import { FileSystemUtils } from '../utils/file-system.js';
 import { readChangeMetadata } from '../utils/change-metadata.js';
 
 /**
- * Parsed row from proposal.md's ## 子能力进度 table.
- */
-export interface ProgressRow {
-  cN: string;
-  spec: boolean;
-  design: boolean;
-  tasks: boolean;
-}
-
-/**
- * Parse the ## 子能力进度 table from proposal.md.
- * Returns null if no table found (simple mode or not yet created).
- */
-export function parseProgressTable(changeDir: string): ProgressRow[] | null {
-  const proposalPath = path.join(changeDir, 'proposal.md');
-  if (!fs.existsSync(proposalPath)) return null;
-
-  try {
-    const content = fs.readFileSync(proposalPath, 'utf-8');
-    const tableMatch = content.match(/## 子能力进度\s*\n[\s\S]*?\n\| c\d+/);
-    if (!tableMatch) return null;
-
-    // Find all table rows after "## 子能力进度"
-    const afterHeader = content.split('## 子能力进度')[1];
-    if (!afterHeader) return null;
-
-    const rows: ProgressRow[] = [];
-    const lines = afterHeader.split('\n');
-    for (const line of lines) {
-      const match = line.match(/^\|\s*(c\d+)\s*\|\s*([✅⬜])\s*\|\s*([✅⬜])\s*\|\s*([✅⬜])\s*\|/);
-      if (match) {
-        rows.push({
-          cN: match[1],
-          spec: match[2] === '✅',
-          design: match[3] === '✅',
-          tasks: match[4] === '✅',
-        });
-      }
-    }
-    return rows.length > 0 ? rows : null;
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Large-mode path mapping: root-level generates → sub-capability glob pattern.
  */
 const LARGE_MODE_GENERATES: Record<string, string> = {
@@ -87,23 +41,9 @@ export function detectCompleted(graph: ArtifactGraph, changeDir: string): Comple
       : artifact.generates;
 
     // File existence check
-    if (!isArtifactComplete(generates, changeDir)) continue;
-
-    // Large mode: also check progress table
-    if (isLarge) {
-      const rows = parseProgressTable(changeDir);
-      if (!rows) continue;
-
-      const colMap: Record<string, keyof ProgressRow> = {
-        'specs/**/*.md': 'spec',
-        'design.md': 'design',
-        'tasks.md': 'tasks',
-      };
-      const col = colMap[artifact.generates] as keyof ProgressRow | undefined;
-      if (col && !rows.every(r => r[col])) continue;
+    if (isArtifactComplete(generates, changeDir)) {
+      completed.add(artifact.id);
     }
-
-    completed.add(artifact.id);
   }
 
   return completed;
