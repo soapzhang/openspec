@@ -258,7 +258,11 @@ export function detectScaleFromProposal(changeDir: string): 'large' | 'small' | 
 
 	try {
 		const content = fs.readFileSync(proposalPath, 'utf-8');
-		const match = content.match(/###\s*New\s+Capabilities\s*\n([\s\S]*?)(?=\n###|\n##\s|$)/);
+		if (/推进结论[：:]\s*复杂需求/.test(content)) return 'large';
+		if (/推进结论[：:]\s*简单需求/.test(content)) return 'small';
+
+		const match = content.match(/###\s*New\s+Capabilities\s*\n([\s\S]*?)(?=\n###|\n##\s|$)/)
+			?? content.match(/##\s*Capabilities\s*\n([\s\S]*?)(?=\n##\s|$)/);
 		if (!match) return undefined;
 
 		const section = match[1];

@@ -1,6 +1,6 @@
 import path from 'path';
-import { validateChangeExists, ensureChangeSize } from './lib/shared.js';
-import { readChangeMetadata } from './lib/utils/change-metadata.js';
+import { validateChangeExists, ensureChangeSize, detectScaleFromProposal } from './lib/shared.js';
+import { readChangeMetadata, writeChangeMetadata } from './lib/utils/change-metadata.js';
 import { instructionsCommand } from './lib/instructions.js';
 import { OPENSPEC_DIR_NAME } from './lib/config.js';
 
@@ -53,6 +53,19 @@ export async function continueCommand(options: ContinueOptions): Promise<void> {
       console.log('规模判定：简单需求。四件套（proposal/specs/design/tasks）直接放变更根目录。');
     }
     console.log();
+  }
+
+  // Backfill: reconcile size with proposal's 推进结论 (proposal created in prior run)
+  if (stage === 'proposal') {
+    const proposalSize = detectScaleFromProposal(changeDir);
+    if (proposalSize && metadata?.size && proposalSize !== metadata.size) {
+      writeChangeMetadata(changeDir, { ...metadata, size: proposalSize }, projectRoot);
+      console.log(
+        proposalSize === 'large'
+          ? '规模已按 proposal 结论修正为：复杂需求。'
+          : '规模已按 proposal 结论修正为：简单需求。'
+      );
+    }
   }
 
   await instructionsCommand(artifactId, { change: changeName });
