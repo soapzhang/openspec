@@ -311,26 +311,28 @@ function parseCapabilitiesFromProposal(changeDir: string): string[] {
 
   try {
     const content = fs.readFileSync(proposalPath, 'utf-8');
-    // Match the blockquote after "推进结论：复杂需求"
-    const blockquoteMatch = content.match(/推进结论：复杂需求[\s\S]*?>\s*\n((?:>\s*-[^\n]*\n?)*)/);
-    if (!blockquoteMatch) {
-      // Fallback: match items from "### New Capabilities" section
-      const ncMatch = content.match(/###\s*New\s+Capabilities\s*\n([\s\S]*?)(?=\n###|\n##\s|$)/);
-      if (!ncMatch) return [];
-      const items = ncMatch[1].split('\n')
-        .filter(line => /^\s*-\s+`?(\*\*`?)?([a-z][a-z0-9-]*)/.test(line))
-        .map(line => {
-          const m = line.match(/`?([a-z][a-z0-9-]*)`?/);
-          return m ? m[1] : '';
-        })
-        .filter(Boolean);
-      return items;
+    let section: string;
+
+    const conclusionMatch = content.match(/推进结论[：:]\s*复杂需求/);
+    if (conclusionMatch && conclusionMatch.index !== undefined) {
+      // Capability list follows the conclusion marker immediately.
+      section = content.slice(conclusionMatch.index, conclusionMatch.index + 800);
+    } else {
+      const capMatch =
+        content.match(/##\s*Capabilities[\s\S]*?(?=\n##\s|$)/) ??
+        content.match(/###\s*New\s+Capabilities[\s\S]*?(?=\n###|\n##\s|$)/);
+      if (!capMatch) return [];
+      section = capMatch[0];
     }
-    const listSection = blockquoteMatch[1];
-    const items = listSection.split('\n')
-      .filter(line => /^\s*>\s*-\s+/.test(line))
-      .map(line => line.replace(/^\s*>\s*-\s+`?/, '').replace(/`$/, '').trim())
-      .filter(Boolean);
+
+    // Collect "- cN-<name>" entries (optional blockquote "> " prefix, optional backticks).
+    const itemRegex = /(?:^|\n)\s*>?\s*-\s*(`?)(c\d+-[^\s`\n]+)\1?\s*$/gm;
+    const items: string[] = [];
+    let m: RegExpExecArray | null;
+    while ((m = itemRegex.exec(section)) !== null) {
+      const name = m[2].trim();
+      if (name && !items.includes(name)) items.push(name);
+    }
     return items;
   } catch {
     return [];
