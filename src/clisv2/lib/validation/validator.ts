@@ -8,6 +8,7 @@ import { ValidationReport, ValidationIssue, ValidationLevel } from './types.js';
 import {
   MIN_PURPOSE_LENGTH,
   MAX_REQUIREMENT_TEXT_LENGTH,
+  MAX_DELTAS_PER_CHANGE,
   VALIDATION_MESSAGES
 } from './constants.js';
 import { parseDeltaSpec, normalizeRequirementName } from '../parsers/requirement-blocks.js';
@@ -322,6 +323,14 @@ export class Validator {
     const issues: ValidationIssue[] = [];
     
     const MIN_DELTA_DESCRIPTION_LENGTH = 10;
+
+    if (change.deltas.length > MAX_DELTAS_PER_CHANGE) {
+      issues.push({
+        level: 'WARNING',
+        path: 'deltas',
+        message: VALIDATION_MESSAGES.CHANGE_TOO_MANY_DELTAS,
+      });
+    }
     
     change.deltas.forEach((delta, index) => {
       if (!delta.description || delta.description.length < MIN_DELTA_DESCRIPTION_LENGTH) {

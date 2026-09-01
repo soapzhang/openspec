@@ -280,6 +280,8 @@ export function generateInstructions(
         ``,
         `从 proposal.md → Capabilities → 推进结论 中逐字复制 cN- 目录名，禁止翻译。`,
         ``,
+        `⚠️ 必须为上面列出的每个目录各创建一份 ${fileName}（共 ${capabilities.length} 个），禁止只创建第一个。`,
+        ``,
         artifact.instruction || '',
       ].join('\n');
     }

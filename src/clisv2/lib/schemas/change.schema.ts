@@ -3,7 +3,6 @@ import { RequirementSchema } from './base.schema.js';
 import { 
   MIN_WHY_SECTION_LENGTH,
   MAX_WHY_SECTION_LENGTH,
-  MAX_DELTAS_PER_CHANGE,
   VALIDATION_MESSAGES 
 } from '../validation/constants.js';
 
@@ -28,8 +27,7 @@ export const ChangeSchema = z.object({
     .max(MAX_WHY_SECTION_LENGTH, VALIDATION_MESSAGES.CHANGE_WHY_TOO_LONG),
   whatChanges: z.string().min(1, VALIDATION_MESSAGES.CHANGE_WHAT_EMPTY),
   deltas: z.array(DeltaSchema)
-    .min(1, VALIDATION_MESSAGES.CHANGE_NO_DELTAS)
-    .max(MAX_DELTAS_PER_CHANGE, VALIDATION_MESSAGES.CHANGE_TOO_MANY_DELTAS),
+    .min(1, VALIDATION_MESSAGES.CHANGE_NO_DELTAS),
   metadata: z.object({
     version: z.string().default('1.0.0'),
     format: z.literal('openspec-change'),

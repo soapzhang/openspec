@@ -63,24 +63,21 @@ metadata:
    - 如果需要更改："立即同步（推荐）"，"归档而不同步"
    - 如果已同步："立即归档"，"仍然同步"，"取消"
 
-   如果用户选择同步，使用 Task 工具（subagent_type: "general-purpose", prompt: "Use Skill tool to invoke openspec-sync-specs for change '<name>'. Delta spec analysis: <include the analyzed delta spec summary>"）。无论选择如何，都继续归档。
+   **注意：规范同步与归档移动均由 `opsc archive` CLI 自动完成，不要手动执行。**
 
 5. **执行归档**
 
-   如果归档目录不存在，创建它：
-   ```bash
-   mkdir -p openspec++/changes/archive
-   ```
-
-   使用当前日期生成目标名称：`YYYY-MM-DD-<change-name>`
-
-   **检查目标是否已存在：**
-   - 如果是：报错失败，建议重命名现有归档或使用不同日期
-   - 如果否：将变更目录移动到归档
+   直接运行 CLI（CLI 会完成校验、合并增量规范到主规范、移动到 archive/）：
 
    ```bash
-   mv openspec++/changes/<name> openspec++/changes/archive/YYYY-MM-DD-<name>
+   opsc archive "<name>" -y
    ```
+
+   - 用户选择"归档而不同步"或"仍然同步"时，追加 `--skip-specs`：
+     ```bash
+     opsc archive "<name>" -y --skip-specs
+     ```
+   - 用户选择"取消"时，停止并说明归档已取消。
 
 6. **显示总结**
 

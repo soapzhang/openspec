@@ -1,20 +1,11 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import * as yaml from 'yaml';
 import { ChangeMetadataSchema, type ChangeMetadata } from '../artifact-graph/types.js';
 import { listSchemas } from '../artifact-graph/resolver.js';
 import { readProjectConfig } from '../project-config.js';
 
 const METADATA_FILENAME = '.openspec.yaml';
-const METADATA_TEMPLATE_PATH = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  '..',
-  '..',
-  '..',
-  'template',
-  'change-meta.yaml'
-);
 
 /**
  * Error thrown when change metadata validation fails.
@@ -80,16 +71,13 @@ export function writeChangeMetadata(
     );
   }
 
-  // Render from template
-  const template = fs.readFileSync(METADATA_TEMPLATE_PATH, 'utf-8');
-  const content = template
-    .replace('{schema}', parseResult.data.schema)
-    .replace('{created}', parseResult.data.created ?? '')
-    .replace('{size}', parseResult.data.size ?? '')
-    .replace('{status}', parseResult.data.status ?? '')
-    .split('\n')
-    .filter((line) => !line.trim().endsWith(':'))
-    .join('\n') + '\n';
+  // Serialize: only include fields with defined values, in stable order.
+  const data = parseResult.data;
+  const obj: Record<string, unknown> = { schema: data.schema };
+  if (data.created !== undefined) obj.created = data.created;
+  if (data.size !== undefined) obj.size = data.size;
+  if (data.status !== undefined) obj.status = data.status;
+  const content = yaml.stringify(obj);
 
   try {
     fs.writeFileSync(metaPath, content, 'utf-8');

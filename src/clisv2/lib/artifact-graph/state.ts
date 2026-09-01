@@ -61,15 +61,19 @@ function isArtifactComplete(generates: string, changeDir: string): boolean {
     return hasGlobMatches(fullPattern);
   }
 
-  // Simple file path - check if file exists
-  return fs.existsSync(fullPattern);
+  // Simple file path - check that the path is an existing file
+  try {
+    return fs.existsSync(fullPattern) && fs.statSync(fullPattern).isFile();
+  } catch {
+    return false;
+  }
 }
 
 /**
  * Checks if a path contains glob pattern characters.
  */
 function isGlobPattern(pattern: string): boolean {
-  return pattern.includes('*') || pattern.includes('?') || pattern.includes('[');
+  return /[*?[\]{}]/.test(pattern);
 }
 
 /**
