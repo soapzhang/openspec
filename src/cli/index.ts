@@ -59,7 +59,8 @@ program
   .description('显示或设置变更的阶段状态')
   .option('--change <id>', '要显示的变更名称')
   .option('--set <stage>', '设置阶段（new/refine/proposal/spec/design/task/cN-apply）')
-  .action(async (options: { change?: string; set?: string }) => {
+  .option('--json', '输出 JSON（产物状态图）')
+  .action(async (options: { change?: string; set?: string; json?: boolean }) => {
     try {
       const { statusCommand } = await import('../clisv2/status.js');
       await statusCommand(options);
@@ -145,6 +146,28 @@ program
     try {
       const { continueCommand } = await import('../clisv2/continue.js');
       await continueCommand(options);
+    } catch (error) {
+      console.log();
+      ora().fail(`Error: ${(error as Error).message}`);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('instructions [artifact-id]')
+  .description('输出指定产物或 apply 的创建/实施指令')
+  .option('--change <id>', '变更名称')
+  .option('--schema <name>', '工作流 Schema')
+  .option('--json', '输出 JSON')
+  .action(async (artifactId: string | undefined, options: { change?: string; schema?: string; json?: boolean }) => {
+    try {
+      if (artifactId === 'apply') {
+        const { applyInstructionsCommand } = await import('../clisv2/lib/instructions.js');
+        await applyInstructionsCommand({ change: options.change, schema: options.schema, json: options.json });
+        return;
+      }
+      const { instructionsCommand } = await import('../clisv2/lib/instructions.js');
+      await instructionsCommand(artifactId, options);
     } catch (error) {
       console.log();
       ora().fail(`Error: ${(error as Error).message}`);

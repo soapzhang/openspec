@@ -1,11 +1,13 @@
 import path from 'path';
 import { validateChangeExists } from './lib/shared.js';
 import { readChangeMetadata, writeChangeMetadata } from './lib/utils/change-metadata.js';
+import { loadChangeContext, formatChangeStatus } from './lib/artifact-graph/index.js';
 import { OPENSPEC_DIR_NAME } from './lib/config.js';
 
 export interface StatusOptions {
   change?: string;
   set?: string;
+  json?: boolean;
 }
 
 const STAGE_VALUES = ['new', 'refine', 'proposal', 'spec', 'design', 'task', 'cN-apply'] as const;
@@ -36,6 +38,12 @@ export async function statusCommand(options: StatusOptions): Promise<void> {
     }
     writeChangeMetadata(changeDir, { ...metadata, status: stage }, projectRoot);
     printStage(changeName, stage);
+    return;
+  }
+
+  if (options.json) {
+    const context = loadChangeContext(projectRoot, changeName);
+    console.log(JSON.stringify(formatChangeStatus(context), null, 2));
     return;
   }
 

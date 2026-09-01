@@ -262,14 +262,35 @@ function parseTasksFile(content: string): TaskItem[] {
  * Supports glob patterns via fast-glob (e.g. specs glob, cN-* patterns).
  */
 function artifactOutputExists(changeDir: string, generates: string): boolean {
+  return resolveArtifactFiles(changeDir, generates).length > 0;
+}
+
+/**
+ * Resolves the concrete file paths produced by an artifact's `generates` pattern.
+ * Handles both simple paths and glob patterns (e.g. specs glob, cN dash wildcard).
+ */
+function resolveArtifactFiles(changeDir: string, generates: string): string[] {
   const fullPath = path.join(changeDir, generates);
 
-  if (generates.includes('*') || generates.includes('?')) {
+  if (generates.includes('*') || generates.includes('?') || generates.includes('[')) {
     const normalizedPattern = fullPath.replace(/\\/g, '/');
-    return fg.sync(normalizedPattern, { onlyFiles: true }).length > 0;
+    return fg.sync(normalizedPattern, { onlyFiles: true });
   }
 
-  return fs.existsSync(fullPath);
+  return fs.existsSync(fullPath) ? [fullPath] : [];
+}
+
+/**
+ * Collects task files in large mode (cN-<capability>/<tracksFile>).
+ */
+function collectLargeTaskFiles(changeDir: string, tracksFile: string): string[] {
+  const pattern = `c[0-9]-*/${tracksFile}`;
+  try {
+    const matches = fg.sync(pattern, { cwd: changeDir, onlyFiles: true });
+    return matches.map((m) => path.join(changeDir, m));
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -316,23 +337,29 @@ export async function generateApplyInstructions(
     }
   }
 
-  // Build context files from all existing artifacts in schema
+  // Build context files from all existing artifacts in schema (large-mode aware)
   const contextFiles: Record<string, string> = {};
   for (const artifact of schema.artifacts) {
-    if (artifactOutputExists(changeDir, artifact.generates)) {
-      contextFiles[artifact.id] = path.join(changeDir, artifact.generates);
+    const generates = isLarge
+      ? (largeModeGenerates[artifact.generates] ?? artifact.generates)
+      : artifact.generates;
+    const found = resolveArtifactFiles(changeDir, generates);
+    if (found.length > 0) {
+      contextFiles[artifact.id] = found.join(path.delimiter);
     }
   }
 
-  // Parse tasks if tracking file exists
+  // Parse tasks if tracking file exists (large mode: aggregate cN-*/tasks.md)
   let tasks: TaskItem[] = [];
   let tracksFileExists = false;
   if (tracksFile) {
-    const tracksPath = path.join(changeDir, tracksFile);
-    tracksFileExists = fs.existsSync(tracksPath);
-    if (tracksFileExists) {
-      const tasksContent = await fs.promises.readFile(tracksPath, 'utf-8');
-      tasks = parseTasksFile(tasksContent);
+    const taskFiles = isLarge
+      ? collectLargeTaskFiles(changeDir, tracksFile)
+      : [path.join(changeDir, tracksFile)].filter((p) => fs.existsSync(p));
+    for (const taskFile of taskFiles) {
+      tracksFileExists = true;
+      const tasksContent = await fs.promises.readFile(taskFile, 'utf-8');
+      tasks.push(...parseTasksFile(tasksContent));
     }
   }
 

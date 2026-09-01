@@ -37,17 +37,36 @@ const RELEASE_SKILL_GUIDANCE = `
 // -----------------------------------------------------------------------------
 
 /**
- * Counts unchecked tasks in tasks.md (`- [ ]` lines). Returns -1 when the
- * file is missing (cannot confirm completion).
+ * Counts unchecked tasks across all task files of a change
+ * (root `tasks.md` for small mode, `cN-<capability>/tasks.md` for large mode).
+ * Returns -1 when no task file exists (cannot confirm completion).
  */
-function countIncompleteTasks(tasksPath: string): number {
+function countIncompleteTasks(changeDir: string): number {
+  const taskFiles = new Set<string>();
+  taskFiles.add(path.join(changeDir, 'tasks.md'));
   try {
-    const content = fs.readFileSync(tasksPath, 'utf-8');
-    const matches = content.match(/^\s*- \[ \]/gm);
-    return matches ? matches.length : 0;
+    const matches = fastGlob.sync('c[0-9]-*/tasks.md', { cwd: changeDir, onlyFiles: true });
+    for (const m of matches) {
+      taskFiles.add(path.join(changeDir, m));
+    }
   } catch {
-    return -1;
+    // ignore glob errors
   }
+
+  let totalFiles = 0;
+  let incomplete = 0;
+  for (const taskFile of taskFiles) {
+    try {
+      const content = fs.readFileSync(taskFile, 'utf-8');
+      totalFiles++;
+      const matches = content.match(/^\s*- \[ \]/gm);
+      if (matches) incomplete += matches.length;
+    } catch {
+      // file missing — skip
+    }
+  }
+
+  return totalFiles === 0 ? -1 : incomplete;
 }
 
 /** Reads the document-level status from release.md (default 草稿). */
@@ -134,15 +153,14 @@ export async function releaseCommand(options: ReleaseOptions): Promise<void> {
     const releasePath = path.join(changeDir, 'release.md');
 
     // Gate 1: apply must have completed (all tasks checked)
-    const tasksPath = path.join(changeDir, 'tasks.md');
-    const incomplete = countIncompleteTasks(tasksPath);
+    const incomplete = countIncompleteTasks(changeDir);
     if (incomplete < 0) {
       spinner.stop();
-      throw new Error(`tasks.md 不存在。请先执行 \`opsc apply\` 完成实施后再运行 \`opsc release\`。`);
+      throw new Error(`未找到任务文件（tasks.md 或 cN-*/tasks.md）。请先执行 \`opsc apply\` 完成实施后再运行 \`opsc release\`。`);
     }
     if (incomplete > 0) {
       spinner.stop();
-      throw new Error(`tasks.md 尚有 ${incomplete} 个任务未完成。请先执行 \`opsc apply\` 完成实施后再运行 \`opsc release\`。`);
+      throw new Error(`尚有 ${incomplete} 个任务未完成。请先执行 \`opsc apply\` 完成实施后再运行 \`opsc release\`。`);
     }
 
     // Gate 2: release.md must exist (created by opsc new)
