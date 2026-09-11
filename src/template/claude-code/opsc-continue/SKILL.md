@@ -1,6 +1,6 @@
 ---
 name: opsc-continue
-description: 通过创建下一个产物继续处理 OpenSpec 变更。当用户想要推进他们的变更、创建下一个产物或继续他们的工作流时使用。
+description: 为 OpenSpec 变更创建下一个产物文档（refine 之后的 proposal/specs/design/tasks）。当用户想要推进产物文档、生成下一个产物时使用。不涉及代码实施（那是 opsc-apply）。
 license: MIT
 compatibility: Requires openspec CLI.
 metadata:
@@ -29,53 +29,50 @@ metadata:
 
    **重要**：不要猜测或自动选择变更。始终让用户选择。
 
-2. **检查当前状态**
+2. **运行 continue 命令**
    ```bash
-   opsc status --change "<name>" --json
+   opsc continue --change "<name>"
    ```
-   解析 JSON 以了解当前状态。响应包括：
-   - `schemaName`：正在使用的工作流 Schema（例如，"spec-driven"）
-   - `artifacts`：产物数组及其状态（"done", "ready", "blocked"）
-   - `isComplete`：指示是否所有产物都已完成的布尔值
+   CLI 会自动完成：读取当前阶段 → 映射下一个产物 → 规模判定（refine 阶段）→ 门槛校验 → 输出产物指令 → 推进状态。**不要**自己跑 `opsc status --json` 或 `opsc instructions` 手工复刻这套流程。
 
-3. **根据状态行动**：
+3. **根据 CLI 输出分流**：
 
    ---
 
-   **如果所有产物都已完成 (`isComplete: true`)**：
-   - 祝贺用户
-   - 显示最终状态，包括使用的 Schema
-   - 建议："所有产物已创建！你现在可以实施此变更或将其归档。"
+   **如果输出"请先运行 `opsc refine` 完成完善环节"**（当前阶段为 new）：
+   - 告知用户变更还在初始阶段
+   - 建议用户确认后调用 `opsc-refine` 技能
    - 停止
 
    ---
 
-   **如果有产物准备创建**（状态显示有 `status: "ready"` 的产物）：
-   - 从状态输出中选择第一个 `status: "ready"` 的产物
-   - 获取其指令：
-     ```bash
-     opsc instructions <artifact-id> --change "<name>" --json
-     ```
-   - 解析 JSON。关键字段是：
-     - `context`：项目背景（给你的约束 - 不要包含在输出中）
-     - `rules`：产物特定规则（给你的约束 - 不要包含在输出中）
-     - `template`：用于输出文件的结构
-     - `instruction`：Schema 特定的指导
-     - `outputPath`：写入产物的位置
-     - `dependencies`：已完成的产物，用于阅读上下文
-   - **创建产物文件**：
-     - 阅读任何已完成的依赖文件以获取上下文
-     - 使用 `template` 作为结构 - 填充其部分
-     - 应用 `context` 和 `rules` 作为约束 - 但不要将它们复制到文件中
-     - 写入指令中指定的输出路径
-   - 显示已创建的内容以及现在解锁的内容
-   - 在创建一个产物后停止
+   **如果输出"所有产物已生成，运行 `opsc apply` 实施任务"**（当前阶段为 tasks）：
+   - 祝贺用户，所有产物已创建
+   - 建议："可以调用 `opsc-apply` 技能开始实施，或将变更归档。"
+   - 停止
 
    ---
 
-   **如果没有产物准备好（全部阻塞）**：
-   - 这在有效 Schema 中不应发生
-   - 显示状态并建议检查问题
+   **如果输出"已完成，运行 `opsc release` 完善上线文档"**（当前阶段为 cN-apply）：
+   - 建议用户调用 `opsc-release` 技能
+   - 停止
+
+   ---
+
+   **否则，输出是产物创建指令**（`<artifact>` XML 结构）。解析并执行：
+   - `<task>`：要创建什么
+   - `<project_context>` / `<rules>`：给你的约束（**不要**复制到产物文件中）
+   - `<dependencies>`：先阅读这些已完成的产物文件获取上下文
+   - `<output>`：产物写入路径
+   - `<instruction>` / `<template>`：创建指导和文件结构（用 template 作为结构填充）
+   - `<warning>`（如出现）：依赖未满足，告知用户缺失项并询问是否继续
+
+   **创建产物文件**：
+   - 阅读 `<dependencies>` 中列出的已完成产物
+   - 使用 `<template>` 作为结构，填充各部分
+   - 写入 `<output>` 指定的路径
+   - 写入后验证文件确实存在
+   - **创建一个产物后停止**
 
 4. **创建产物后，显示进度**
    ```bash
@@ -87,8 +84,7 @@ metadata:
 每次调用后，显示：
 - 创建了哪个产物
 - 正在使用的 Schema 工作流
-- 当前进度（N/M 完成）
-- 现在解锁了哪些产物
+- 当前阶段与下一步（来自 `opsc status` 输出）
 - 提示："想要继续吗？只需让我继续或告诉我下一步做什么。"
 
 **产物创建指南**
@@ -100,7 +96,7 @@ metadata:
 **spec-driven schema** (proposal → specs → design → tasks):
 - **proposal.md**：如果不清楚，询问用户关于变更的信息。填写 Why, What Changes, Capabilities, Impact。
   - Capabilities 就两个点：(1) 推进结论（简单/复杂）；(2) 能力清单。capability 名用用户对话语言，禁止翻译。
-  - **规模判定**：先数能力数，≥ 3 → 复杂需求，< 3 → 简单需求。必须执行，不可跳过。
+  - **规模判定**：以 `opsc continue` CLI 判定为准（refine 阶段自动完成，写入 `yaml.size` 并输出提示）。proposal 的推进结论必须与 CLI 判定一致，不自行重新计数。
     - **简单需求** → 四件套放变更根目录。
 	    - **复杂需求** → c1-xxx ~ cN-xxx 子能力目录。每个目录只有 3 个文件：spec.md、design.md、tasks.md。根目录 proposal.md 为总览。
 

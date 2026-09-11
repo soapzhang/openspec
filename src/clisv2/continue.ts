@@ -11,7 +11,7 @@ export interface ContinueOptions {
 const NEXT_ARTIFACT: Record<string, string> = {
   refine: 'proposal',
   proposal: 'specs',
-  spec: 'design',
+  specs: 'design',
   design: 'tasks',
 };
 
@@ -30,7 +30,7 @@ export async function continueCommand(options: ContinueOptions): Promise<void> {
     console.log('请先运行 `opsc refine` 完成完善环节。');
     return;
   }
-  if (stage === 'task') {
+  if (stage === 'tasks') {
     console.log('所有产物已生成，运行 `opsc apply` 实施任务。');
     return;
   }
@@ -69,4 +69,8 @@ export async function continueCommand(options: ContinueOptions): Promise<void> {
   }
 
   await instructionsCommand(artifactId, { change: changeName });
+
+  // 自动推进状态，免去手动 `opsc status --set`（重读元数据避免覆盖 ensureChangeSize 写入的 size）
+  const latest = readChangeMetadata(changeDir, projectRoot) ?? metadata;
+  writeChangeMetadata(changeDir, { ...latest, status: artifactId }, projectRoot);
 }

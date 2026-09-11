@@ -49,11 +49,11 @@ export async function initCommand(targetPath: string): Promise<void> {
   console.log(`目录：${openspecPath}`);
   console.log();
   console.log('快速开始：');
-  console.log('  /opsc:new       开始新的变更');
-  console.log('  /opsc:continue  创建下一个产物');
-  console.log('  /opsc:apply     实施任务');
+  console.log('  /opsc-new       开始新的变更');
+  console.log('  /opsc-continue  创建下一个产物');
+  console.log('  /opsc-apply     实施任务');
   console.log();
-  console.log('重启 IDE 以使斜杠命令生效。');
+  console.log('重启 IDE 以使技能生效。');
   console.log();
 }
 

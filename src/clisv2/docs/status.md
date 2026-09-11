@@ -18,9 +18,9 @@
 | new | `opsc refine` |
 | refine | `opsc continue`（生成 proposal） |
 | proposal | `opsc continue`（生成 specs） |
-| spec | `opsc continue`（生成 design） |
+| specs | `opsc continue`（生成 design） |
 | design | `opsc continue`（生成 tasks） |
-| task | `opsc apply` |
+| tasks | `opsc apply` |
 | cN-apply | `opsc release` |
 
 ## 用法
@@ -31,10 +31,10 @@ opsc status --change f17085-登录重构
 opsc status --change <name> --set proposal   # 手动推进阶段
 ```
 
-`--set` 取值：`new/refine/proposal/spec/design/task/cN-apply`，校验非法值报错。
+`--set` 取值：`new/refine/proposal/specs/design/tasks/cN-apply`，校验非法值报错。旧版单数值（`spec`/`task`）读取时自动归一为复数。
 
 阶段语义：
-- `spec`/`design`/`task`：所有子能力（cN）统一完成，不带 cN 前缀
+- `specs`/`design`/`tasks`：所有子能力（cN）统一完成，不带 cN 前缀
 - `cN-apply`：实施按子能力 1by1 推进，带 cN 前缀
 - 简单需求（无子能力拆分）同样适用这套阶段
 
@@ -42,4 +42,4 @@ opsc status --change <name> --set proposal   # 手动推进阶段
 
 - 命令实现：`src/clisv2/status.ts`
 - 状态字段定义：`.openspec.yaml` 的 `status`（`src/core/artifact-graph/types.ts`）
-- 状态写入：`new`（`new`）、`refine`（`refine`），后续命令迁移时补充
+- 状态写入：`new`（`new` 命令）、`refine`（`refine` 命令）、`proposal`~`tasks`（`continue` 自动推进）、`cN-apply`（手动 `--set`）

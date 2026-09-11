@@ -36,7 +36,7 @@ metadata:
    ```
    交互方式（用户终端）：直接运行 `opsc new`，按提示输入 ID 与描述。
    仅在用户请求特定工作流时添加 `--schema <name>`。
-   这将在 `openspec++/changes/f17085-登录重构/` 下创建变更，含 `bugs/` 目录。
+   这将在 `openspec++/changes/f17085-登录重构/` 下创建变更，含 `bugs/` 目录和 `release.md` 上线文档草稿（供后续 `opsc release` 完善）。
 
 4. **提示进入完善环节（spec 前强制）**
 
@@ -51,7 +51,7 @@ metadata:
 完成步骤后，总结：
 - 变更名称（含跟踪 ID）和位置
 - 下一步：运行 `opsc refine` 进入强制完善环节
-- 提示："准备好开始完善环节了吗？运行 /opsc:refine，或描述变更内容，我帮你起草 refine.md。"
+- 提示："准备好开始完善环节了吗？运行 /opsc-refine，或描述变更内容，我帮你起草 refine.md。"
 
 **护栏**
 - 必须携带跟踪 ID（`f<ID>-描述`）；缺失时引导提供或日期兜底

@@ -7,7 +7,7 @@
 ## 做了什么
 
 1. 定位变更，读 yaml `status`
-2. 门槛：`status` 必须是 `task`（或 `cN-apply`），否则报错
+2. 门槛：`status` 必须是 `tasks`（或 `cN-apply`），否则报错
 3. 复用 `applyInstructionsCommand` 输出实施指令（上下文文件、任务清单、进度）
 
 ## 用法

@@ -7,6 +7,12 @@ import { readProjectConfig } from '../project-config.js';
 
 const METADATA_FILENAME = '.openspec.yaml';
 
+// 旧版单数阶段名 → 现行复数阶段名（读取时自动归一）
+const LEGACY_STAGE_NAMES: Record<string, string> = {
+  spec: 'specs',
+  task: 'tasks',
+};
+
 /**
  * Error thrown when change metadata validation fails.
  */
@@ -142,16 +148,21 @@ export function readChangeMetadata(
     );
   }
 
+  const data = parseResult.data;
+  if (data.status && LEGACY_STAGE_NAMES[data.status]) {
+    data.status = LEGACY_STAGE_NAMES[data.status];
+  }
+
   // Validate that the schema exists
   const availableSchemas = listSchemas(projectRoot);
-  if (!availableSchemas.includes(parseResult.data.schema)) {
+  if (!availableSchemas.includes(data.schema)) {
     throw new ChangeMetadataError(
-      `Unknown schema '${parseResult.data.schema}'. Available: ${availableSchemas.join(', ')}`,
+      `Unknown schema '${data.schema}'. Available: ${availableSchemas.join(', ')}`,
       metaPath
     );
   }
 
-  return parseResult.data;
+  return data;
 }
 
 /**

@@ -16,8 +16,8 @@ export async function applyCommand(options: ApplyOptions): Promise<void> {
   const metadata = readChangeMetadata(changeDir, projectRoot);
   const stage = metadata?.status;
 
-  if (stage !== 'task' && stage !== 'cN-apply') {
-    throw new Error(`当前阶段 '${stage ?? 'unknown'}' 不能 apply。需要 status=task。`);
+  if (stage !== 'tasks' && stage !== 'cN-apply') {
+    throw new Error(`当前阶段 '${stage ?? 'unknown'}' 不能 apply。需要 status=tasks。`);
   }
 
   await applyInstructionsCommand({ change: changeName, json: options.json });

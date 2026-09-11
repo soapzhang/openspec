@@ -112,7 +112,7 @@ export async function validateChangeExists(
   if (!changeName) {
     const available = await getAvailableChanges();
     if (available.length === 0) {
-      throw new Error('No changes found. Create one with: opsc new change <name>');
+      throw new Error('No changes found. Create one with: opsc new <name>');
     }
     throw new Error(
       `Missing required option --change. Available changes:\n  ${available.join('\n  ')}`
@@ -133,7 +133,7 @@ export async function validateChangeExists(
     const available = await getAvailableChanges();
     if (available.length === 0) {
       throw new Error(
-        `Change '${changeName}' not found. No changes exist. Create one with: opsc new change <name>`
+        `Change '${changeName}' not found. No changes exist. Create one with: opsc new <name>`
       );
     }
     throw new Error(

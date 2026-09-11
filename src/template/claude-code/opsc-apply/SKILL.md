@@ -1,6 +1,6 @@
 ---
 name: opsc-apply
-description: 实施 OpenSpec 变更中的任务。当用户想要开始实施、继续实施或处理任务时使用。
+description: 按 tasks.md 任务清单逐项实施 OpenSpec 变更（写代码并勾选任务）。当用户想要开始/继续代码实施时使用。产物文档未就绪时不要用本技能（那是 opsc-continue）。
 license: MIT
 compatibility: Requires openspec CLI.
 metadata:
@@ -35,7 +35,7 @@ metadata:
 3. **获取实施指令**
 
    ```bash
-   opsc instructions apply --change "<name>" --json
+   opsc apply --change "<name>" --json
    ```
 
    这返回：
@@ -45,7 +45,8 @@ metadata:
    - 基于当前状态的动态指令
 
    **处理状态：**
-   - 如果 `state: "blocked"`：**STOP，拒绝实施。**显示缺失信息，告知用户必须先运行 `opsc continue` 补齐产物。禁止跳过、禁止提前写代码。
+   - 如果 CLI 报错"需要 status=tasks"：先 `opsc status --change "<name>"` 查看当前阶段，然后调用 `opsc-continue` 技能按序补齐产物链，完成后重试本步骤。
+   - 如果 `state: "blocked"`：**STOP，拒绝实施。**列出缺失的产物，对缺失项运行 `opsc instructions <artifact-id> --change "<name>"` 获取指令并创建该产物（或调用 `opsc-continue` 技能），补齐后重新运行 `opsc apply`。禁止跳过、禁止提前写代码。
    - 如果 `state: "all_done"`：祝贺，建议归档
    - 否则：继续实施
 

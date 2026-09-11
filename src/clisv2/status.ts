@@ -10,15 +10,15 @@ export interface StatusOptions {
   json?: boolean;
 }
 
-const STAGE_VALUES = ['new', 'refine', 'proposal', 'spec', 'design', 'task', 'cN-apply'] as const;
+const STAGE_VALUES = ['new', 'refine', 'proposal', 'specs', 'design', 'tasks', 'cN-apply'] as const;
 
 const STAGE_NEXT: Record<string, string> = {
   new: 'opsc refine',
   refine: 'opsc continue（生成 proposal）',
   proposal: 'opsc continue（生成 specs）',
-  spec: 'opsc continue（生成 design）',
+  specs: 'opsc continue（生成 design）',
   design: 'opsc continue（生成 tasks）',
-  task: 'opsc apply',
+  tasks: 'opsc apply',
   'cN-apply': 'opsc release',
 };
 
