@@ -1,6 +1,6 @@
 {
   "name": "@openspeccn/openspec",
-  "version": "7.0.0",
+  "version": "7.0.1",
   "description": "AI-native system for spec-driven development",
   "keywords": [
     "openspec",
